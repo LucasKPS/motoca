@@ -1,0 +1,11 @@
+export type Delivery = {
+  id: string;
+  customerName: string;
+  address: string;
+  restaurant: string;
+  status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+  deadline: string;
+  photo?: string;
+  earnings: number;
+  deliveryTime?: string;
+};
