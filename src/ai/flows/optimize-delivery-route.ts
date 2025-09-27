@@ -116,8 +116,44 @@ const optimizeDeliveryRouteFlow = ai.defineFlow(
     outputSchema: OptimizeDeliveryRouteOutputSchema,
   },
   async input => {
-    const promptResult = await prompt(input);
-    const output = promptResult.output;
+    const llmResponse = await ai.generate({
+        prompt: prompt.prompt!,
+        model: 'googleai/gemini-2.5-flash',
+        tools: [rerouteDeliveries],
+        output: {
+            schema: OptimizeDeliveryRouteOutputSchema,
+        },
+        promptData: input,
+    });
+
+
+    const toolCalls = llmResponse.toolCalls;
+    if (toolCalls.length > 0) {
+        const toolCall = toolCalls[0];
+        if (toolCall.tool.name === 'rerouteDeliveries') {
+            const toolResponse = await toolCall.run();
+
+            const finalResponse = await ai.generate({
+                prompt: prompt.prompt!,
+                model: 'googleai/gemini-2.5-flash',
+                tools: [rerouteDeliveries],
+                toolResponse: [
+                  {
+                    tool: toolCall.tool,
+                    call: toolCall.call,
+                    response: toolResponse
+                  }
+                ],
+                output: {
+                    schema: OptimizeDeliveryRouteOutputSchema,
+                },
+                promptData: input,
+            });
+            return finalResponse.output!;
+        }
+    }
+    
+    const output = llmResponse.output;
     if (!output) {
       throw new Error("Failed to get a response from the AI.");
     }
