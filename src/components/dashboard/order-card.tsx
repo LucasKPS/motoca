@@ -1,9 +1,12 @@
+'use client';
+
 import type { Delivery } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Package, Store, CheckCircle } from "lucide-react";
 import { DeliveryConfirmationDialog } from "./delivery-confirmation-dialog";
+import { useEffect, useState } from "react";
 
 interface OrderCardProps {
   delivery: Delivery;
@@ -18,6 +21,11 @@ const statusMap: Record<Delivery['status'], { label: string; color: "default" | 
 
 const OrderCard = ({ delivery }: OrderCardProps) => {
   const statusInfo = statusMap[delivery.status];
+  const [formattedDeadline, setFormattedDeadline] = useState('');
+
+  useEffect(() => {
+    setFormattedDeadline(new Date(delivery.deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+  }, [delivery.deadline]);
 
   return (
     <Card className="flex flex-col">
@@ -41,7 +49,7 @@ const OrderCard = ({ delivery }: OrderCardProps) => {
         </p>
         <p className="flex items-center gap-2 text-sm">
           <Clock className="w-4 h-4 shrink-0 text-muted-foreground" />
-          <span>Prazo: {new Date(delivery.deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span>Prazo: {formattedDeadline}</span>
         </p>
       </CardContent>
       <CardFooter>
