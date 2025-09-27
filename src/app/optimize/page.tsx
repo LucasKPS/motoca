@@ -144,7 +144,7 @@ export default function OptimizePage() {
                   )}
                 />
                 
-                <Button type="submit" disabled={isLoading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Route className="mr-2 h-4 w-4" />}
                   {isLoading ? 'Otimizando...' : 'Otimizar Rota'}
                 </Button>

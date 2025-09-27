@@ -8,8 +8,7 @@ const Header = () => {
         <SidebarTrigger />
       </div>
       <div className="flex items-center gap-2 md:hidden">
-        <Logo className="w-6 h-6 text-primary" />
-        <span className="text-md font-headline font-semibold">Rota Expressa</span>
+        <Logo className="w-8 h-8 text-primary" />
       </div>
       <div className="flex-1" />
       {/* Could add User menu here */}

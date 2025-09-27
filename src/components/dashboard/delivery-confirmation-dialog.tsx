@@ -60,7 +60,7 @@ export function DeliveryConfirmationDialog({ delivery }: { delivery: Delivery })
   return (
     <Dialog onOpenChange={(open) => !open && resetState()}>
       <DialogTrigger asChild>
-        <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">Confirmar Entrega</Button>
+        <Button className="w-full">Confirmar Entrega</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         {isConfirmed ? (
