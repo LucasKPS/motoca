@@ -62,7 +62,7 @@ const rerouteDeliveries = ai.defineTool({
       .describe('A list of deliveries to be optimized.'),
   }),
   outputSchema: z.object({
-    deliveries: z
+    optimizedRoute: z
       .array(
         z.object({
           id: z.string().describe('The unique identifier for the delivery.'),
@@ -71,16 +71,18 @@ const rerouteDeliveries = ai.defineTool({
         })
       )
       .describe('The optimized delivery route after considering volume of deliveries'),
+      summary: z.string().describe('A summary of the route optimization based on volume.'),
   }),
 }, async (input) => {
   // Placeholder implementation for rerouting deliveries based on volume.
   // In a real application, this would involve calling an external service
   // or performing calculations to determine the optimal rerouting.
   return {
-    deliveries: input.deliveries.map(delivery => ({
+    summary: 'A rota foi recalculada com base no alto volume de entregas na área para garantir a eficiência.',
+    optimizedRoute: input.deliveries.map(delivery => ({
       ...delivery,
-      estimatedArrivalTime: new Date().toISOString(), // Placeholder ETA
-    })),
+      estimatedArrivalTime: new Date(Date.now() + Math.random() * 60 * 60 * 1000).toISOString(), // Placeholder ETA
+    })).sort(() => Math.random() - 0.5), // Randomize order for placeholder
   };
 });
 
@@ -100,10 +102,10 @@ const prompt = ai.definePrompt({
   {{/each}}
 
   {{#if rerouteBasedOnVolume}}
-  The delivery driver has the option to reroute deliveries based on volume using the rerouteDeliveries tool. If they want to do so, call the rerouteDeliveries tool.
-  {{/if}}
-
+  The user has requested to consider rerouting based on delivery volume. Use the 'rerouteDeliveries' tool if you determine it is necessary based on the provided data.
+  {{else}}
   Optimize the delivery route considering the delivery deadlines and traffic conditions. Provide a summary of the route optimization.
+  {{/if}}
   `,
 });
 
