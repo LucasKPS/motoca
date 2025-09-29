@@ -64,10 +64,15 @@ const AppSidebar = () => {
         <Separator className="my-2" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Perfil">
-              <UserCircle />
-              <span>Meu Perfil</span>
-            </SidebarMenuButton>
+             <Link href="/profile" passHref>
+                <SidebarMenuButton 
+                    isActive={pathname === '/profile'}
+                    tooltip="Perfil"
+                >
+                <UserCircle />
+                <span>Meu Perfil</span>
+                </SidebarMenuButton>
+             </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
