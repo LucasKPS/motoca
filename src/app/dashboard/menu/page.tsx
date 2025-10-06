@@ -1,21 +1,50 @@
 'use client';
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookOpen, MoreHorizontal, PlusCircle } from "lucide-react";
+import type { MenuItem } from "@/lib/types";
+import { MenuItemDialog } from "@/components/dashboard/menu-item-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-const menuItems = [
-    { id: 'item-1', name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão fresco.', price: 45.00, category: 'Pizzas Salgadas' },
-    { id: 'item-2', name: 'Pizza Calabresa', description: 'Molho de tomate, mussarela, calabresa e cebola.', price: 48.50, category: 'Pizzas Salgadas' },
-    { id: 'item-3', name: 'Pizza Romeu e Julieta', description: 'Mussarela, goiabada e um toque de canela.', price: 52.00, category: 'Pizzas Doces' },
-    { id: 'item-4', name: 'Coca-Cola 2L', description: 'Refrigerante Coca-Cola, garrafa de 2 litros.', price: 12.00, category: 'Bebidas' },
-    { id: 'item-5', name: 'Água Mineral 500ml', description: 'Água sem gás.', price: 5.00, category: 'Bebidas' },
-];
+interface MenuPageProps {
+    menuItems?: MenuItem[];
+    onSaveItem?: (item: MenuItem) => void;
+    onDeleteItem?: (itemId: string) => void;
+}
 
+export default function MenuPage({ menuItems = [], onSaveItem = () => {}, onDeleteItem = () => {} }: MenuPageProps) {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<MenuItem | undefined>(undefined);
 
-export default function MenuPage() {
+    const handleOpenDialog = (item?: MenuItem) => {
+        setSelectedItem(item);
+        setIsDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setIsDialogOpen(false);
+        setSelectedItem(undefined);
+    };
+
+    const handleSave = (item: MenuItem) => {
+        onSaveItem(item);
+        handleCloseDialog();
+    };
+    
     return (
         <div className="flex flex-col gap-8 p-4 container">
             <div className="flex justify-between items-start">
@@ -26,7 +55,7 @@ export default function MenuPage() {
                     </h1>
                     <p className="text-muted-foreground mt-1">Gerencie os itens disponíveis em seu restaurante.</p>
                 </div>
-                <Button>
+                <Button onClick={() => handleOpenDialog()}>
                     <PlusCircle className="mr-2"/>
                     Adicionar Novo Item
                 </Button>
@@ -40,7 +69,7 @@ export default function MenuPage() {
                                 <TableHead>Item</TableHead>
                                 <TableHead>Categoria</TableHead>
                                 <TableHead className="text-right">Preço</TableHead>
-                                <TableHead className="w-[80px]">Ações</TableHead>
+                                <TableHead className="w-[80px] text-right">Ações</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -53,17 +82,35 @@ export default function MenuPage() {
                                     <TableCell>{item.category}</TableCell>
                                     <TableCell className="text-right font-medium">{item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
                                     <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent>
-                                                <DropdownMenuItem>Editar</DropdownMenuItem>
-                                                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">Remover</DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <AlertDialog>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleOpenDialog(item)}>Editar</DropdownMenuItem>
+                                                     <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                          Remover
+                                                        </DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                             <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Essa ação não pode ser desfeita. Isso irá remover permanentemente o item "{item.name}" do seu cardápio.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => onDeleteItem(item.id)} className="bg-destructive hover:bg-destructive/90">Remover</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -71,6 +118,13 @@ export default function MenuPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+             <MenuItemDialog 
+                isOpen={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                item={selectedItem}
+                onSave={handleSave}
+            />
         </div>
     );
 }

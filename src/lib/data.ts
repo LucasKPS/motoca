@@ -1,4 +1,4 @@
-import type { Delivery, MerchantOrder } from './types';
+import type { Delivery, MerchantOrder, MenuItem } from './types';
 
 export const deliveries: Delivery[] = [
   {
@@ -89,4 +89,12 @@ export const initialMerchantOrders: MerchantOrder[] = [
     { id: '#1136', customerName: 'Carlos Pereira', status: 'out_for_delivery', time: 'Há 12 min', total: 90.00, items: 4, courier: { name: 'João D.', rating: 4.8 } },
     { id: '#1135', customerName: 'Daniela Martins', status: 'delivered', time: 'Há 30 min', total: 25.00, items: 1, courier: { name: 'Maria S.', rating: 4.9 } },
     { id: '#1134', customerName: 'Eduardo Almeida', status: 'delivered', time: 'Há 45 min', total: 42.00, items: 3, courier: { name: 'João D.', rating: 4.8 } },
+];
+
+export const initialMenuItems: MenuItem[] = [
+    { id: 'item-1', name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão fresco.', price: 45.00, category: 'Pizzas Salgadas' },
+    { id: 'item-2', name: 'Pizza Calabresa', description: 'Molho de tomate, mussarela, calabresa e cebola.', price: 48.50, category: 'Pizzas Salgadas' },
+    { id: 'item-3', name: 'Pizza Romeu e Julieta', description: 'Mussarela, goiabada e um toque de canela.', price: 52.00, category: 'Pizzas Doces' },
+    { id: 'item-4', name: 'Coca-Cola 2L', description: 'Refrigerante Coca-Cola, garrafa de 2 litros.', price: 12.00, category: 'Bebidas' },
+    { id: 'item-5', name: 'Água Mineral 500ml', description: 'Água sem gás.', price: 5.00, category: 'Bebidas' },
 ];

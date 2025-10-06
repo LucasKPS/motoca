@@ -6,8 +6,8 @@ import { useEffect, useState, Children, cloneElement, isValidElement } from 'rea
 import { Loader2, Users } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import DashboardSidebar from './_components/sidebar';
-import type { Delivery } from '@/lib/types';
-import { deliveries } from '@/lib/data';
+import type { Delivery, MenuItem } from '@/lib/types';
+import { deliveries, initialMenuItems } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import CourierHome from './_components/courier-home';
@@ -114,6 +114,7 @@ export default function DashboardLayout({
 
   // Merchant State
   const [merchantOrders, setMerchantOrders] = useState<MerchantOrder[]>(initialMerchantOrders);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   
   // Shared State
   const [name, setName] = useState('');
@@ -184,6 +185,29 @@ export default function DashboardLayout({
         description: 'Seu pedido da Pizzaria Delícia está a caminho.',
     });
     router.push('/dashboard/my-orders?role=client');
+  }
+
+  const handleSaveMenuItem = (item: MenuItem) => {
+    setMenuItems(prev => {
+        const exists = prev.some(i => i.id === item.id);
+        if (exists) {
+            return prev.map(i => i.id === item.id ? item : i);
+        }
+        return [...prev, { ...item, id: `item-${Date.now()}` }];
+    });
+     toast({
+        title: `Item ${item.id ? 'Atualizado' : 'Adicionado'}!`,
+        description: `${item.name} foi salvo com sucesso no cardápio.`,
+    });
+  }
+
+  const handleDeleteMenuItem = (itemId: string) => {
+      setMenuItems(prev => prev.filter(i => i.id !== itemId));
+      toast({
+        title: 'Item Removido!',
+        description: 'O item foi removido do seu cardápio.',
+        variant: 'destructive',
+    });
   }
   
   useEffect(() => {
@@ -258,6 +282,11 @@ export default function DashboardLayout({
         if (userRole === 'merchant') {
             if (pathname === '/dashboard/orders') {
                 props.orders = merchantOrders;
+            }
+             if (pathname === '/dashboard/menu') {
+                props.menuItems = menuItems;
+                props.onSaveItem = handleSaveMenuItem;
+                props.onDeleteItem = handleDeleteMenuItem;
             }
         }
     

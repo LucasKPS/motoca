@@ -31,3 +31,11 @@ export type MerchantOrder = {
     rating: number;
   }
 }
+
+export type MenuItem = {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category: string;
+}
