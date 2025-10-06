@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Bell, CreditCard, Shield, User } from "lucide-react";
+import { Bell, Shield, User } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import type { Delivery } from "@/lib/types";
 
-export default function SettingsPage({ deliveries }: { deliveries: Delivery[] }) {
+export default function SettingsPage({ deliveries = [] }: { deliveries: Delivery[] }) {
     return (
         <div className="container mx-auto p-4 flex flex-col gap-8">
             <h1 className="text-3xl font-headline font-bold text-primary">Configurações</h1>
@@ -91,7 +91,7 @@ export default function SettingsPage({ deliveries }: { deliveries: Delivery[] })
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline text-destructive">Zona de Perigo</CardTitle>
                     <CardDescription>Ações permanentes que não podem ser desfeitas.</CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent className="flex items-center justify-between">
                      <p className="font-medium">Excluir conta</p>
                     <Button variant="destructive">Excluir minha conta</Button>
