@@ -56,10 +56,25 @@ export default function DashboardLayout({
   const searchParams = useSearchParams();
   
   const roleQuery = searchParams.get('role');
-  const [userRole, setUserRole] = useState<UserRole>((roleQuery === 'client' ? 'client' : 'courier'));
+  
+  const getInitialRole = (): UserRole => {
+    if (typeof window !== 'undefined') {
+        const savedRole = localStorage.getItem('userRole') as UserRole;
+        if (savedRole) return savedRole;
+    }
+    return roleQuery === 'client' ? 'client' : 'courier';
+  }
+
+  const [userRole, setUserRole] = useState<UserRole>(getInitialRole());
+
+  useEffect(() => {
+    setUserRole(getInitialRole());
+  }, [roleQuery]);
+
 
   const handleRoleChange = (role: UserRole) => {
     setUserRole(role);
+    localStorage.setItem('userRole', role);
     const params = new URLSearchParams(searchParams);
     params.set('role', role);
     router.push(`${pathname}?${params.toString()}`);

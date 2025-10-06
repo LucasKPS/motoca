@@ -13,7 +13,9 @@ import { useAuth, useUser } from "@/firebase";
 import { initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useToast } from "@/hooks/use-toast";
 
-function SignupForm({ role, onFormSubmit }: { role: 'client' | 'merchant' | 'courier', onFormSubmit: (data: any) => void }) {
+type UserRole = 'client' | 'merchant' | 'courier';
+
+function SignupForm({ role, onFormSubmit }: { role: UserRole, onFormSubmit: (data: any) => void }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -112,13 +114,16 @@ export default function SignupPage() {
 
     useEffect(() => {
         if (!isUserLoading && user) {
-            router.replace('/dashboard');
+            const userRole = localStorage.getItem('userRole') || 'courier';
+            router.replace(`/dashboard?role=${userRole}`);
         }
     }, [user, isUserLoading, router]);
 
-    const handleSignup = (formData: any) => {
+    const handleSignup = (formData: { role: UserRole; email: string; password: string }) => {
+        // Save the role to local storage for persistence across sessions
+        localStorage.setItem('userRole', formData.role);
+
         initiateEmailSignUp(auth, formData.email, formData.password);
-        // The onAuthStateChanged listener in DashboardLayout will handle the redirection.
         toast({
             title: "Cadastro em progresso...",
             description: "Você será redirecionado para o seu painel em breve.",
