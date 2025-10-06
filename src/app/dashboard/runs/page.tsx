@@ -19,12 +19,17 @@ interface RunsPageProps {
     handleAccept: (delivery: Delivery) => void;
 }
 
-export default function RunsPage({ deliveries, newDeliveryOffers, handleConfirmDelivery, handleAccept }: RunsPageProps) {
+export default function RunsPage({ 
+    deliveries = [], 
+    newDeliveryOffers = [], 
+    handleConfirmDelivery, 
+    handleAccept 
+}: RunsPageProps) {
   const [showNewRun, setShowNewRun] = useState(false);
   
   // newDeliveryOffer is now memoized and will only re-calculate when a new run is shown
   const newDeliveryOffer = useMemo(() => {
-    if (!showNewRun) return null;
+    if (!showNewRun || newDeliveryOffers.length === 0) return null;
     // Pick a random delivery offer each time we want to show one
     return newDeliveryOffers[Math.floor(Math.random() * newDeliveryOffers.length)];
   }, [showNewRun, newDeliveryOffers]);
