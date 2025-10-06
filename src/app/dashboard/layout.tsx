@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import CourierHome from './_components/courier-home';
 import ClientHome from './_components/client-home';
+import type { Order } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 const newDeliveryOffers: Delivery[] = [
     {
@@ -43,6 +45,13 @@ const newDeliveryOffers: Delivery[] = [
     },
 ];
 
+const initialOrders: Order[] = [
+    { id: 'ORD-001', restaurant: 'Pizzaria Delícia', date: 'Hoje, 20:30', status: 'delivered', total: 58.50, rating: 5 },
+    { id: 'ORD-002', restaurant: 'Burger Queen', date: 'Ontem, 19:45', status: 'delivered', total: 35.00, rating: 4 },
+    { id: 'ORD-003', restaurant: 'Sushi House', date: '2 dias atrás, 21:00', status: 'cancelled', total: 90.00 },
+    { id: 'ORD-004', restaurant: 'Açaí Power', date: '5 dias atrás, 15:00', status: 'delivered', total: 25.00, rating: 5 },
+]
+
 type UserRole = 'client' | 'courier';
 
 export default function DashboardLayout({
@@ -54,6 +63,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   
   const roleQuery = searchParams.get('role');
   
@@ -70,13 +80,14 @@ export default function DashboardLayout({
   useEffect(() => {
     const currentRole = getInitialRole();
     setUserRole(currentRole);
-    // Keep URL in sync with the role
-    const params = new URLSearchParams(searchParams);
-    if (params.get('role') !== currentRole) {
-        params.set('role', currentRole);
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    if (!isUserLoading && user) {
+        const params = new URLSearchParams(searchParams);
+        if (params.get('role') !== currentRole) {
+            params.set('role', currentRole);
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        }
     }
-  }, [roleQuery, user]);
+  }, [roleQuery, user, isUserLoading]);
 
 
   const handleRoleChange = (role: UserRole) => {
@@ -91,16 +102,26 @@ export default function DashboardLayout({
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
   const [showNewRun, setShowNewRun] = useState(false);
   const [newDeliveryOffer, setNewDeliveryOffer] = useState<Delivery | null>(null);
+
+  // Client State
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   
   // Profile & Settings State (shared)
-  const [name, setName] = useState(user?.displayName ?? '');
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('(11) 99999-8888');
   const [vehicle, setVehicle] = useState('moto');
   const [plate, setPlate] = useState('BRA2E19');
-  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [notifyNewRuns, setNotifyNewRuns] = useState(true);
   const [notifyPromos, setNotifyPromos] = useState(true);
   const [notifySummary, setNotifySummary] = useState(false);
+
+  useEffect(() => {
+     if (user) {
+        setName(user.displayName ?? (userRole === 'courier' ? 'João da Silva' : 'Ana Cliente'));
+        setAvatarUrl(user.photoURL ?? `https://i.pravatar.cc/150?u=${user.uid}`);
+     }
+  }, [user, userRole]);
   
   const handleAccept = () => {
     if (newDeliveryOffer) {
@@ -133,18 +154,27 @@ export default function DashboardLayout({
     );
   };
   
+  const handleCreateOrder = () => {
+    const newOrder: Order = {
+        id: `ORD-${String(orders.length + 5).padStart(3, '0')}`,
+        restaurant: 'Pizzaria Delícia',
+        date: 'Hoje',
+        status: 'in_transit',
+        total: 78.99,
+    };
+    setOrders(prev => [newOrder, ...prev]);
+    toast({
+        title: 'Pedido Realizado!',
+        description: 'Seu pedido da Pizzaria Delícia está a caminho.',
+    });
+    router.push('/dashboard/my-orders?role=client');
+  }
+  
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
-  
-   useEffect(() => {
-    if (!name) {
-      setName(userRole === 'courier' ? 'João da Silva' : 'Ana Cliente');
-    }
-  }, [userRole, name]);
-
 
   if (isUserLoading || !user) {
     return (
@@ -158,7 +188,6 @@ export default function DashboardLayout({
     if (isValidElement(child)) {
         const isDashboardHome = pathname === '/dashboard';
         
-        // Don't pass props to the homepage placeholder
         if (isDashboardHome) return child;
 
         const commonProps = {
@@ -186,7 +215,20 @@ export default function DashboardLayout({
         }
         
         if (userRole === 'client') {
-            return cloneElement(child as React.ReactElement<any>, commonProps);
+             // Define specific props for client pages
+             const clientProps: any = {
+                ...commonProps,
+            };
+
+            if (pathname === '/dashboard/my-orders') {
+                clientProps.orders = orders;
+            }
+            
+            if (pathname === '/dashboard/order') {
+                clientProps.onCreateOrder = handleCreateOrder;
+            }
+
+            return cloneElement(child as React.ReactElement<any>, clientProps);
         }
     }
     return child;

@@ -1,16 +1,9 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ListOrdered, Package, CheckCircle, XCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const orders = [
-    { id: 'ORD-001', restaurant: 'Pizzaria Delícia', date: 'Hoje, 20:30', status: 'delivered', total: 58.50, rating: 5 },
-    { id: 'ORD-002', restaurant: 'Burger Queen', date: 'Ontem, 19:45', status: 'delivered', total: 35.00, rating: 4 },
-    { id: 'ORD-003', restaurant: 'Sushi House', date: '2 dias atrás, 21:00', status: 'cancelled', total: 90.00 },
-    { id: 'ORD-004', restaurant: 'Açaí Power', date: '5 dias atrás, 15:00', status: 'delivered', total: 25.00, rating: 5 },
-];
+import type { Order } from "@/lib/types";
 
 const statusMap: Record<string, { label: string; icon: React.ElementType, color: string }> = {
   delivered: { label: 'Entregue', icon: CheckCircle, color: 'text-green-600' },
@@ -19,7 +12,7 @@ const statusMap: Record<string, { label: string; icon: React.ElementType, color:
 };
 
 
-export default function MyOrdersPage() {
+export default function MyOrdersPage({ orders = [] }: { orders: Order[] }) {
   return (
     <div className="flex flex-col gap-8 p-4 container">
         <h1 className="text-3xl font-headline font-bold text-primary flex items-center gap-2">
@@ -51,6 +44,11 @@ export default function MyOrdersPage() {
                                     ))}
                                 </div>
                                 <Button variant="outline" size="sm">Pedir Novamente</Button>
+                            </CardContent>
+                        )}
+                        {order.status === 'in_transit' && (
+                             <CardContent className="flex justify-end items-center pt-4 border-t mt-4">
+                                <Button variant="outline" size="sm">Acompanhar Pedido</Button>
                             </CardContent>
                         )}
                         {order.status === 'cancelled' && (

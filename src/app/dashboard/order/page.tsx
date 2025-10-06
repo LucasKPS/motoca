@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { MinusCircle, PlusCircle, ArrowLeft, Star, ShoppingCart, Info } from "lucide-react";
+import { MinusCircle, PlusCircle, ArrowLeft, Star, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,7 +15,7 @@ const menuItems = [
     { name: 'Água sem gás', description: 'Garrafa de 500ml', price: 4.00 },
 ]
 
-export default function OrderPage() {
+export default function OrderPage({ onCreateOrder = () => {} }: { onCreateOrder?: () => void }) {
 
     const cartTotal = 73.00; // Simulação
     const deliveryFee = 5.99;
@@ -109,7 +109,7 @@ export default function OrderPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <Button className="w-full" size="lg">Finalizar Pedido</Button>
+                    <Button className="w-full" size="lg" onClick={onCreateOrder}>Finalizar Pedido</Button>
                 </CardFooter>
             </Card>
         </div>

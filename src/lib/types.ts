@@ -9,3 +9,12 @@ export type Delivery = {
   earnings: number;
   deliveryTime?: string;
 };
+
+export type Order = {
+    id: string;
+    restaurant: string;
+    date: string;
+    status: 'in_transit' | 'delivered' | 'cancelled';
+    total: number;
+    rating?: number;
+}
