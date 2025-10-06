@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 interface OrderCardProps {
   delivery: Delivery;
+  onConfirmDelivery?: (deliveryId: string) => void;
 }
 
 const statusMap: Record<Delivery['status'], { label: string; color: "default" | "secondary" | "destructive" | "outline", icon: React.ReactNode }> = {
@@ -19,7 +20,7 @@ const statusMap: Record<Delivery['status'], { label: string; color: "default" | 
   cancelled: { label: 'Cancelada', color: 'destructive', icon: <CheckCircle className="w-3 h-3" /> },
 };
 
-const OrderCard = ({ delivery }: OrderCardProps) => {
+const OrderCard = ({ delivery, onConfirmDelivery }: OrderCardProps) => {
   const statusInfo = statusMap[delivery.status];
   const [formattedDeadline, setFormattedDeadline] = useState('');
 
@@ -53,8 +54,8 @@ const OrderCard = ({ delivery }: OrderCardProps) => {
         </p>
       </CardContent>
       <CardFooter>
-        {delivery.status === 'in_transit' || delivery.status === 'pending' ? (
-          <DeliveryConfirmationDialog delivery={delivery} />
+        {(delivery.status === 'in_transit' || delivery.status === 'pending') && onConfirmDelivery ? (
+          <DeliveryConfirmationDialog delivery={delivery} onConfirmDelivery={onConfirmDelivery} />
         ) : (
           <Button variant="outline" disabled className="w-full">
             Entrega Finalizada

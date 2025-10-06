@@ -16,7 +16,7 @@ import { Camera, Loader2, PartyPopper } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Delivery } from '@/lib/types';
 
-export function DeliveryConfirmationDialog({ delivery }: { delivery: Delivery }) {
+export function DeliveryConfirmationDialog({ delivery, onConfirmDelivery }: { delivery: Delivery, onConfirmDelivery: (deliveryId: string) => void }) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [photoTaken, setPhotoTaken] = useState(false);
@@ -35,6 +35,7 @@ export function DeliveryConfirmationDialog({ delivery }: { delivery: Delivery })
     setTimeout(() => {
       setIsConfirming(false);
       setIsConfirmed(true);
+      onConfirmDelivery(delivery.id);
       toast({
         title: "Entrega Confirmada!",
         description: `A entrega para ${delivery.customerName} foi confirmada com sucesso.`,

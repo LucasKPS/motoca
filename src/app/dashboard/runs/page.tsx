@@ -25,14 +25,15 @@ const newDeliveryOffer: Delivery = {
 
 export default function RunsPage() {
   const [showNewRun, setShowNewRun] = useState(true);
-  const [activeDeliveries, setActiveDeliveries] = useState<Delivery[]>(
-    deliveries.filter(d => d.status === 'in_transit' || d.status === 'pending')
-  );
-  const historicDeliveries = deliveries.filter(d => d.status === 'delivered' || d.status === 'cancelled');
+  const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
+
+  const activeDeliveries = allDeliveries.filter(d => d.status === 'in_transit' || d.status === 'pending');
+  const historicDeliveries = allDeliveries.filter(d => d.status === 'delivered' || d.status === 'cancelled');
 
   const handleAccept = () => {
-    setActiveDeliveries(prev => [
-        {...newDeliveryOffer, status: 'in_transit'},
+    const newDelivery = {...newDeliveryOffer, status: 'in_transit' as const};
+    setAllDeliveries(prev => [
+        newDelivery,
         ...prev
     ]);
     setShowNewRun(false);
@@ -40,6 +41,14 @@ export default function RunsPage() {
 
   const handleDecline = () => {
     setShowNewRun(false);
+  };
+
+  const handleConfirmDelivery = (deliveryId: string) => {
+    setAllDeliveries(prev => 
+      prev.map(d => 
+        d.id === deliveryId ? { ...d, status: 'delivered' } : d
+      )
+    );
   };
 
   return (
@@ -92,7 +101,7 @@ export default function RunsPage() {
             {activeDeliveries.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-4">
                     {activeDeliveries.map((delivery) => (
-                        <OrderCard key={delivery.id} delivery={delivery} />
+                        <OrderCard key={delivery.id} delivery={delivery} onConfirmDelivery={handleConfirmDelivery} />
                     ))}
                  </div>
             ): (
