@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,16 +12,51 @@ import { useAuth, useUser } from "@/firebase";
 import { Bike, DollarSign, Edit, Star, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Delivery } from "@/lib/types";
-
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[] }) {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [vehicle, setVehicle] = useState('moto');
+  const [plate, setPlate] = useState('BRA2E19');
+  const [newRunNotifications, setNewRunNotifications] = useState(true);
+  const [promoNotifications, setPromoNotifications] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
   const totalDeliveries = deliveredDeliveries.length;
   const totalEarnings = deliveredDeliveries.reduce((acc, d) => acc + d.earnings, 0);
+
+  const handleEditPhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarUrl(e.target?.result as string);
+        toast({
+          title: "Foto de perfil atualizada!",
+          description: "Sua nova foto já está visível. Clique em 'Salvar Alterações' para mantê-la.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveChanges = () => {
+    // In a real app, you'd save this data to your backend/database.
+    toast({
+      title: "Perfil Salvo!",
+      description: "Suas informações foram atualizadas com sucesso.",
+    });
+  };
 
   const handleLogout = () => {
     auth.signOut();
@@ -38,17 +74,24 @@ export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[
             <Card>
                 <CardHeader className="items-center text-center">
                     <Avatar className="w-24 h-24 mb-4">
-                        <AvatarImage src={user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`} />
+                        <AvatarImage src={avatarUrl} />
                         <AvatarFallback>{user?.displayName?.charAt(0) ?? user?.email?.charAt(0) ?? 'U'}</AvatarFallback>
                     </Avatar>
                     <CardTitle className="font-headline">{user?.displayName ?? 'Usuário'}</CardTitle>
                     <CardDescription>{user?.email}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={handleEditPhotoClick}>
                         <Edit className="mr-2 h-4 w-4" />
                         Editar Foto
                     </Button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handlePhotoChange} 
+                      className="hidden" 
+                      accept="image/*"
+                    />
                 </CardContent>
             </Card>
              <Card>
@@ -92,7 +135,7 @@ export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[
             <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="vehicle">Veículo Padrão</Label>
-                    <Select defaultValue="moto">
+                    <Select value={vehicle} onValueChange={setVehicle}>
                         <SelectTrigger id="vehicle">
                             <SelectValue placeholder="Selecione seu veículo" />
                         </SelectTrigger>
@@ -112,22 +155,22 @@ export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="plate">Placa do Veículo</Label>
-                    <Input id="plate" defaultValue="BRA2E19" />
+                    <Input id="plate" value={plate} onChange={(e) => setPlate(e.target.value)} />
                 </div>
                 <div className="space-y-4 pt-4">
                     <Label>Notificações</Label>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                         <p className="text-sm">Novas corridas</p>
-                        <Switch defaultChecked />
+                        <Switch checked={newRunNotifications} onCheckedChange={setNewRunNotifications} />
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                         <p className="text-sm">Promoções e avisos</p>
-                        <Switch />
+                        <Switch checked={promoNotifications} onCheckedChange={setPromoNotifications} />
                     </div>
                 </div>
 
                 <div className="pt-4">
-                    <Button className="w-full">Salvar Alterações</Button>
+                    <Button className="w-full" onClick={handleSaveChanges}>Salvar Alterações</Button>
                 </div>
             </CardContent>
             </Card>
