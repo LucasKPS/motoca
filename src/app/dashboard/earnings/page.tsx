@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Delivery } from "@/lib/types";
 
-export default function EarningsPage({ deliveries }: { deliveries: Delivery[] }) {
+export default function EarningsPage({ deliveries = [] }: { deliveries: Delivery[] }) {
     const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
 
     const totalEarnings = deliveredDeliveries.reduce((acc, d) => acc + d.earnings, 0);
