@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useAuth, useUser } from "@/firebase";
 import { deliveries } from "@/lib/data";
-import { Bike, DollarSign, Edit, LogOut, Star, Truck } from "lucide-react";
+import { Bike, DollarSign, Edit, Star, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
@@ -29,10 +29,6 @@ export default function ProfilePage() {
     <div className="flex flex-col gap-8 p-4 container">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-headline font-bold text-primary">Meu Perfil</h1>
-        <Button variant="ghost" onClick={handleLogout}>
-            <LogOut className="mr-2" />
-            Sair
-        </Button>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3 items-start">
