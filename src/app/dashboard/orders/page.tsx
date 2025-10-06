@@ -1,5 +1,5 @@
 'use client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { MerchantOrder } from "@/lib/types";
@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, ShoppingCart, Bike, CheckCircle, Clock, Utensils, User, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const statusMap: Record<MerchantOrder['status'], { label: string; icon: React.ElementType, color: string, bgColor: string }> = {
   preparing: { label: 'Em Preparo', icon: Clock, color: 'text-amber-600', bgColor: 'bg-amber-100' },
@@ -61,13 +62,18 @@ const OrderRow = ({ order }: { order: MerchantOrder }) => {
 
 export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOrder[] }) {
     
-  const tabs = [
+  const tabs: { value: MerchantOrder['status'] | 'all', label: string }[] = [
     { value: 'all', label: 'Todos' },
     { value: 'preparing', label: 'Em Preparo' },
-    { value: 'ready', label: 'Prontos para Retirada' },
+    { value: 'ready', label: 'Prontos' },
     { value: 'out_for_delivery', label: 'Em Entrega' },
     { value: 'delivered', label: 'Concluídos' },
   ];
+
+  const getFilteredOrders = (status: MerchantOrder['status'] | 'all') => {
+      if (status === 'all') return orders;
+      return orders.filter(o => o.status === status);
+  }
   
   return (
     <div className="flex flex-col gap-8 p-4 container">
@@ -83,38 +89,53 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
         <Card>
             <CardContent className="p-0">
                 <Tabs defaultValue="all">
-                    <TabsList className="p-2 h-auto flex-wrap">
-                        {tabs.map(tab => (
-                            <TabsTrigger key={tab.value} value={tab.value}>
-                                {tab.label} ({orders.filter(o => tab.value === 'all' || o.status === tab.value).length})
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
+                    <div className="p-2">
+                        <TabsList className="h-auto flex-wrap justify-start">
+                            {tabs.map(tab => (
+                                <TabsTrigger key={tab.value} value={tab.value}>
+                                    {tab.label} ({getFilteredOrders(tab.value).length})
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </div>
 
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Pedido</TableHead>
-                                <TableHead>Cliente</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-center">Itens</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
-                                <TableHead>Entregador</TableHead>
-                                <TableHead className="text-right">Ações</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                           {tabs.map(tab => (
-                             <TabsContent key={tab.value} value={tab.value} asChild>
-                                <>
-                                  {orders.filter(o => tab.value === 'all' || o.status === tab.value).map(order => (
-                                    <OrderRow key={order.id} order={order} />
-                                  ))}
-                                </>
-                              </TabsContent>
-                           ))}
-                        </TableBody>
-                    </Table>
+                    {tabs.map(tab => {
+                        const filteredOrders = getFilteredOrders(tab.value);
+                        return (
+                            <TabsContent key={tab.value} value={tab.value}>
+                                {filteredOrders.length > 0 ? (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Pedido</TableHead>
+                                                <TableHead>Cliente</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead className="text-center">Itens</TableHead>
+                                                <TableHead className="text-right">Total</TableHead>
+                                                <TableHead>Entregador</TableHead>
+                                                <TableHead className="text-right">Ações</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredOrders.map(order => (
+                                                <OrderRow key={order.id} order={order} />
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <div className="p-8">
+                                         <Alert className="text-center">
+                                            <ShoppingCart className="w-4 h-4" />
+                                            <AlertTitle>Nenhum pedido encontrado</AlertTitle>
+                                            <AlertDescription>
+                                                Não há pedidos com o status "{tab.label}" no momento.
+                                            </AlertDescription>
+                                        </Alert>
+                                    </div>
+                                )}
+                            </TabsContent>
+                        )
+                    })}
                 </Tabs>
             </CardContent>
         </Card>

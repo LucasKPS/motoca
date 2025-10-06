@@ -115,15 +115,18 @@ export default function DashboardLayout({
   // Merchant State
   const [merchantOrders, setMerchantOrders] = useState<MerchantOrder[]>(initialMerchantOrders);
   
-  // Profile & Settings State (shared)
+  // Shared State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('(11) 99999-8888');
-  const [vehicle, setVehicle] = useState('moto');
-  const [plate, setPlate] = useState('BRA2E19');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [notifyNewRuns, setNotifyNewRuns] = useState(true);
   const [notifyPromos, setNotifyPromos] = useState(true);
   const [notifySummary, setNotifySummary] = useState(false);
+  
+  // Courier-specific State
+  const [vehicle, setVehicle] = useState('moto');
+  const [plate, setPlate] = useState('BRA2E19');
+  const [notifyNewRuns, setNotifyNewRuns] = useState(true);
+
 
   useEffect(() => {
      if (user) {
@@ -203,7 +206,7 @@ export default function DashboardLayout({
         
         if (isDashboardHome) return child;
 
-        const commonProps: any = {
+        let props: any = {
             name, setName,
             phone, setPhone,
             avatarUrl, setAvatarUrl,
@@ -211,46 +214,54 @@ export default function DashboardLayout({
             notifySummary, setNotifySummary,
         };
 
+        if (pathname === '/dashboard/settings') {
+             props = {
+                ...props,
+                notifyNewRuns,
+                setNotifyNewRuns,
+            };
+        }
+
         if (userRole === 'courier') {
             if (pathname === '/dashboard/runs') {
-                commonProps.deliveries = allDeliveries;
-                commonProps.handleConfirmDelivery = handleConfirmDelivery;
-                commonProps.newDeliveryOffer = newDeliveryOffer;
-                commonProps.showNewRun = showNewRun;
-                commonProps.onAcceptRun = handleAccept;
-                commonProps.onDeclineRun = handleDecline;
-                commonProps.onShowNewRun = handleShowNewRun;
+                props.deliveries = allDeliveries;
+                props.handleConfirmDelivery = handleConfirmDelivery;
+                props.newDeliveryOffer = newDeliveryOffer;
+                props.showNewRun = showNewRun;
+                props.onAcceptRun = handleAccept;
+                props.onDeclineRun = handleDecline;
+                props.onShowNewRun = handleShowNewRun;
             }
              if (pathname === '/dashboard/earnings') {
-                commonProps.deliveries = allDeliveries;
+                props.deliveries = allDeliveries;
             }
             if (pathname === '/dashboard/profile') {
-                commonProps.deliveries = allDeliveries;
-                commonProps.vehicle = vehicle;
-                commonProps.setVehicle = setVehicle;
-                commonProps.plate = plate;
-                commonProps.setPlate = setPlate;
-                commonProps.notifyNewRuns = notifyNewRuns;
-                commonProps.setNotifyNewRuns = setNotifyNewRuns;
+                props.deliveries = allDeliveries;
+                props.vehicle = vehicle;
+                props.setVehicle = setVehicle;
+                props.plate = plate;
+                props.setPlate = setPlate;
+                props.notifyNewRuns = notifyNewRuns;
+                props.setNotifyNewRuns = setNotifyNewRuns;
             }
         }
         
         if (userRole === 'client') {
             if (pathname === '/dashboard/my-orders') {
-                commonProps.orders = orders;
+                props.orders = orders;
             }
             if (pathname === '/dashboard/order') {
-                commonProps.onCreateOrder = handleCreateOrder;
+                props.onCreateOrder = handleCreateOrder;
             }
         }
 
         if (userRole === 'merchant') {
             if (pathname === '/dashboard/orders') {
-                commonProps.orders = merchantOrders;
+                props.orders = merchantOrders;
             }
         }
     
-        return cloneElement(child as React.ReactElement<any>, commonProps);
+        return cloneElement(child as React.ReactElement<any>, props);
     }
     return child;
   });
