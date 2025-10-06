@@ -12,6 +12,7 @@ import { initiateEmailSignIn } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -27,27 +28,30 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const { toast } = useToast();
 
+    // THIS EFFECT IS THE PROBLEM AND WILL BE REMOVED.
+    // The DashboardLayout is the single source of truth for protecting routes.
+    /*
     useEffect(() => {
         if (!isUserLoading && user) {
             router.replace('/dashboard');
         }
     }, [user, isUserLoading, router]);
+    */
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         initiateEmailSignIn(auth, email, password);
-        // We don't redirect here immediately. The onAuthStateChanged listener
-        // in a protected layout will handle the redirection to the dashboard.
+        // The onAuthStateChanged listener in DashboardLayout will handle the redirection.
         toast({
             title: "Login em progresso...",
-            description: "Você será redirecionado em breve.",
+            description: "Você será redirecionado para o seu painel em breve.",
         });
     }
     
     if (isUserLoading || (!isUserLoading && user)) {
         return (
              <div className="flex min-h-screen items-center justify-center bg-background">
-                <p>Carregando...</p>
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div>
         )
     }
