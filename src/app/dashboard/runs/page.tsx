@@ -28,7 +28,7 @@ export default function RunsPage({
     showNewRun = false,
     onAcceptRun = () => {},
     onDeclineRun = () => {},
-    onShowNewRun = () => {},
+    onShowNewRun,
 }: RunsPageProps) {
   
   const activeDeliveries = deliveries.filter(d => d.status === 'in_transit' || d.status === 'pending');
