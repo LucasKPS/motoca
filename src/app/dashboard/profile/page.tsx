@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import type { Delivery } from "@/lib/types";
 
 
-export default function ProfilePage({ deliveries }: { deliveries: Delivery[] }) {
+export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[] }) {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
