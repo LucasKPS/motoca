@@ -1,0 +1,221 @@
+{
+  "entities": {
+    "DeliveryOrder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DeliveryOrder",
+      "type": "object",
+      "description": "Represents a delivery order in the Rota Expressa application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Delivery Order entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to Customer. (Relationship: Customer 1:N DeliveryOrder)"
+        },
+        "deliveryCourierId": {
+          "type": "string",
+          "description": "Reference to DeliveryCourier. (Relationship: DeliveryCourier 1:N DeliveryOrder)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "The date and time the order was placed.",
+          "format": "date-time"
+        },
+        "deliveryAddress": {
+          "type": "string",
+          "description": "The delivery address for the order."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the delivery (e.g., 'Pending', 'En Route', 'Delivered', 'Cancelled')."
+        },
+        "estimatedDeliveryTime": {
+          "type": "string",
+          "description": "The estimated delivery time.",
+          "format": "date-time"
+        },
+        "actualDeliveryTime": {
+          "type": "string",
+          "description": "The actual delivery time, recorded upon confirmation.",
+          "format": "date-time"
+        },
+        "confirmationPhotoUrl": {
+          "type": "string",
+          "description": "URL of the photo taken upon delivery confirmation.",
+          "format": "uri"
+        },
+        "orderTotal": {
+          "type": "number",
+          "description": "The total amount of the order."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "deliveryCourierId",
+        "orderDate",
+        "deliveryAddress",
+        "status",
+        "estimatedDeliveryTime"
+      ]
+    },
+    "Customer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Customer",
+      "type": "object",
+      "description": "Represents a customer in the Rota Expressa application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Customer entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the customer."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the customer."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the customer.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the customer."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the customer."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "address"
+      ]
+    },
+    "DeliveryCourier": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DeliveryCourier",
+      "type": "object",
+      "description": "Represents a delivery courier in the Rota Expressa application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DeliveryCourier entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the delivery courier."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the delivery courier."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the delivery courier.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the delivery courier."
+        },
+        "vehicleType": {
+          "type": "string",
+          "description": "The type of vehicle used by the delivery courier (e.g., 'Car', 'Motorcycle', 'Bicycle')."
+        },
+        "currentLocationLatitude": {
+          "type": "number",
+          "description": "The current latitude of the delivery courier."
+        },
+        "currentLocationLongitude": {
+          "type": "number",
+          "description": "The current longitude of the delivery courier."
+        },
+        "earnings": {
+          "type": "number",
+          "description": "The total earnings of the delivery courier."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "vehicleType",
+        "currentLocationLatitude",
+        "currentLocationLongitude",
+        "earnings"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/customers/{customerId}",
+        "definition": {
+          "entityName": "Customer",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Stores customer profiles. The 'customerId' is the Firebase Auth UID. This allows path-based security rules for user-specific data.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "The unique identifier for the customer, matching the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/deliveryCouriers/{deliveryCourierId}",
+        "definition": {
+          "entityName": "DeliveryCourier",
+          "schema": {
+            "$ref": "#/backend/entities/DeliveryCourier"
+          },
+          "description": "Stores delivery courier profiles. The 'deliveryCourierId' is the Firebase Auth UID. This allows path-based security rules for user-specific data.",
+          "params": [
+            {
+              "name": "deliveryCourierId",
+              "description": "The unique identifier for the delivery courier, matching the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/deliveryOrders/{deliveryOrderId}",
+        "definition": {
+          "entityName": "DeliveryOrder",
+          "schema": {
+            "$ref": "#/backend/entities/DeliveryOrder"
+          },
+          "description": "Stores delivery order information. Includes denormalized customer and courier information for authorization independence.  Fields like `customerId`, `deliveryCourierId` are stored here to relate an order to customer and courier. Includes fields like `customerName`, `customerContact`, `courierName`, `courierVehicle` from the related entities to enable authorization rules without requiring `get()` calls to the customer or courier documents.",
+          "params": [
+            {
+              "name": "deliveryOrderId",
+              "description": "The unique identifier for the delivery order."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the Rota Expressa application, focusing on functionality, real-world account usage, and practical screens and functionalities. It emphasizes authorization independence and QAPs by denormalizing customer and courier information into the DeliveryOrder documents, avoiding costly `get()` calls in security rules and ensuring secure `list` operations. The use of path-based ownership for Customer and DeliveryCourier data ensures data privacy. Collaborative data, if needed in the future (e.g., for support tickets), would use a membership map.\n\nAuthorization Independence (CRITICAL): Customer and DeliveryCourier details relevant for authorization are denormalized into the DeliveryOrder document. For example, instead of having a DeliveryOrder just referencing a `customerId`, key details from the customer (e.g., `customerName`, `customerContact`) are copied into the `DeliveryOrder`. This eliminates the need for rules to fetch the Customer document to validate access.\n\nClarity of Intent (Debuggability): The structure is explicit: Customers and DeliveryCouriers have their own collections, with DeliveryOrders stored in a top-level collection for easy querying and management.\n\nDBAC (No Custom Claims): Authorization relies on `request.auth.uid` and the denormalized data within the DeliveryOrder documents, ensuring rules are straightforward.\n\nQAPs (Rules are not Filters): Segregation is achieved by placing each entity type in its own collection. This approach, combined with denormalization, allows for secure list operations, as rules can validate access based on the content of the document itself.\n\nInvariants: The structure supports the integrity of ownership, timestamps, and denormalized data. Security rules can enforce that only the associated Customer or DeliveryCourier can modify specific fields of a DeliveryOrder."
+  }
+}
