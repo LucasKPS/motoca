@@ -18,3 +18,16 @@ export type Order = {
     total: number;
     rating?: number;
 }
+
+export type MerchantOrder = {
+  id: string;
+  customerName: string;
+  status: 'preparing' | 'ready' | 'out_for_delivery' | 'delivered';
+  time: string;
+  total: number;
+  items: number;
+  courier?: {
+    name: string;
+    rating: number;
+  }
+}

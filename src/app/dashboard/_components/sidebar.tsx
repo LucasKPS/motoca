@@ -13,7 +13,7 @@ import {
 import { Logo } from '@/components/icons';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Settings, LogOut, Truck, DollarSign, ShoppingCart, ListOrdered, Utensils } from 'lucide-react';
+import { Home, User, Settings, LogOut, Truck, DollarSign, ListOrdered, Utensils, ShoppingCart, BarChart, BookOpen } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -33,16 +33,37 @@ const clientSidebarItems = [
     { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
 ]
 
-export default function DashboardSidebar({ userRole = 'courier' }: { userRole: 'client' | 'courier' }) {
+const merchantSidebarItems = [
+    { href: '/dashboard', label: 'Visão Geral', icon: Home },
+    { href: '/dashboard/orders', label: 'Pedidos', icon: ShoppingCart },
+    { href: '/dashboard/menu', label: 'Cardápio', icon: BookOpen },
+    { href: '/dashboard/finances', label: 'Financeiro', icon: BarChart },
+    { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
+];
+
+export default function DashboardSidebar({ userRole = 'courier' }: { userRole: 'client' | 'courier' | 'merchant' }) {
   const pathname = usePathname();
   const { open } = useSidebar();
   const auth = useAuth();
   const router = useRouter();
 
-  const sidebarItems = userRole === 'client' ? clientSidebarItems : courierSidebarItems;
+  let sidebarItems;
+  switch (userRole) {
+    case 'client':
+      sidebarItems = clientSidebarItems;
+      break;
+    case 'merchant':
+      sidebarItems = merchantSidebarItems;
+      break;
+    case 'courier':
+    default:
+      sidebarItems = courierSidebarItems;
+      break;
+  }
 
   const handleLogout = () => {
     auth.signOut();
+    localStorage.removeItem('userRole');
     router.push('/login');
   }
 
@@ -59,7 +80,7 @@ export default function DashboardSidebar({ userRole = 'courier' }: { userRole: '
         <SidebarMenu>
           {sidebarItems.map((item) => {
             const isActive = pathname === item.href;
-            const href = userRole === 'client' ? `${item.href}?role=client` : item.href;
+            const href = `${item.href}?role=${userRole}`;
 
             return (
                 <SidebarMenuItem key={item.href}>

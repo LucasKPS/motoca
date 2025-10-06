@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import CourierHome from './_components/courier-home';
 import ClientHome from './_components/client-home';
-import type { Order } from '@/lib/types';
+import MerchantHome from './_components/merchant-home';
+import type { Order, MerchantOrder } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { initialMerchantOrders } from '@/lib/data';
 
 const newDeliveryOffers: Delivery[] = [
     {
@@ -52,7 +54,7 @@ const initialOrders: Order[] = [
     { id: 'ORD-004', restaurant: 'Açaí Power', date: '5 dias atrás, 15:00', status: 'delivered', total: 25.00, rating: 5 },
 ]
 
-type UserRole = 'client' | 'courier';
+type UserRole = 'client' | 'courier' | 'merchant';
 
 export default function DashboardLayout({
   children,
@@ -72,7 +74,11 @@ export default function DashboardLayout({
         const savedRole = localStorage.getItem('userRole') as UserRole;
         if (savedRole) return savedRole;
     }
-    return roleQuery === 'client' ? 'client' : 'courier';
+    const paramRole = roleQuery as UserRole;
+    if (['client', 'courier', 'merchant'].includes(paramRole)) {
+        return paramRole;
+    }
+    return 'courier';
   }
 
   const [userRole, setUserRole] = useState<UserRole>(getInitialRole());
@@ -105,6 +111,9 @@ export default function DashboardLayout({
 
   // Client State
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  // Merchant State
+  const [merchantOrders, setMerchantOrders] = useState<MerchantOrder[]>(initialMerchantOrders);
   
   // Profile & Settings State (shared)
   const [name, setName] = useState('');
@@ -118,7 +127,11 @@ export default function DashboardLayout({
 
   useEffect(() => {
      if (user) {
-        setName(user.displayName ?? (userRole === 'courier' ? 'João da Silva' : 'Ana Cliente'));
+        let defaultName = 'Usuário';
+        if (userRole === 'courier') defaultName = 'João da Silva';
+        else if (userRole === 'client') defaultName = 'Ana Cliente';
+        else if (userRole === 'merchant') defaultName = 'Pizzaria Delícia';
+        setName(user.displayName ?? defaultName);
         setAvatarUrl(user.photoURL ?? `https://i.pravatar.cc/150?u=${user.uid}`);
      }
   }, [user, userRole]);
@@ -190,7 +203,7 @@ export default function DashboardLayout({
         
         if (isDashboardHome) return child;
 
-        const commonProps = {
+        const commonProps: any = {
             name, setName,
             phone, setPhone,
             avatarUrl, setAvatarUrl,
@@ -199,42 +212,62 @@ export default function DashboardLayout({
         };
 
         if (userRole === 'courier') {
-            return cloneElement(child as React.ReactElement<any>, {
-                ...commonProps,
-                deliveries: allDeliveries, 
-                handleConfirmDelivery,
-                newDeliveryOffer,
-                showNewRun,
-                onAcceptRun: handleAccept,
-                onDeclineRun: handleDecline,
-                onShowNewRun: handleShowNewRun,
-                vehicle, setVehicle,
-                plate, setPlate,
-                notifyNewRuns, setNotifyNewRuns,
-            });
+            if (pathname === '/dashboard/runs') {
+                commonProps.deliveries = allDeliveries;
+                commonProps.handleConfirmDelivery = handleConfirmDelivery;
+                commonProps.newDeliveryOffer = newDeliveryOffer;
+                commonProps.showNewRun = showNewRun;
+                commonProps.onAcceptRun = handleAccept;
+                commonProps.onDeclineRun = handleDecline;
+                commonProps.onShowNewRun = handleShowNewRun;
+            }
+             if (pathname === '/dashboard/earnings') {
+                commonProps.deliveries = allDeliveries;
+            }
+            if (pathname === '/dashboard/profile') {
+                commonProps.deliveries = allDeliveries;
+                commonProps.vehicle = vehicle;
+                commonProps.setVehicle = setVehicle;
+                commonProps.plate = plate;
+                commonProps.setPlate = setPlate;
+                commonProps.notifyNewRuns = notifyNewRuns;
+                commonProps.setNotifyNewRuns = setNotifyNewRuns;
+            }
         }
         
         if (userRole === 'client') {
-             // Define specific props for client pages
-             const clientProps: any = {
-                ...commonProps,
-            };
-
             if (pathname === '/dashboard/my-orders') {
-                clientProps.orders = orders;
+                commonProps.orders = orders;
             }
-            
             if (pathname === '/dashboard/order') {
-                clientProps.onCreateOrder = handleCreateOrder;
+                commonProps.onCreateOrder = handleCreateOrder;
             }
-
-            return cloneElement(child as React.ReactElement<any>, clientProps);
         }
+
+        if (userRole === 'merchant') {
+            if (pathname === '/dashboard/orders') {
+                commonProps.orders = merchantOrders;
+            }
+        }
+    
+        return cloneElement(child as React.ReactElement<any>, commonProps);
     }
     return child;
   });
 
   const isDashboardHome = pathname === '/dashboard';
+
+  const renderHome = () => {
+    switch (userRole) {
+        case 'client':
+            return <ClientHome name={name} />;
+        case 'merchant':
+            return <MerchantHome name={name} orders={merchantOrders}/>;
+        case 'courier':
+        default:
+            return <CourierHome name={name} />;
+    }
+  }
 
   return (
       <SidebarProvider>
@@ -244,7 +277,7 @@ export default function DashboardLayout({
                 <Users className="w-5 h-5 text-muted-foreground" />
                 <div className="flex-1">
                     <h3 className="font-semibold">Simulação de Papel</h3>
-                    <p className="text-sm text-muted-foreground">Alterne entre a visão de Cliente e Entregador para ver as diferentes interfaces.</p>
+                    <p className="text-sm text-muted-foreground">Alterne entre as visões para ver as diferentes interfaces.</p>
                 </div>
                 <Select value={userRole} onValueChange={handleRoleChange}>
                     <SelectTrigger className="w-[180px]">
@@ -253,13 +286,12 @@ export default function DashboardLayout({
                     <SelectContent>
                         <SelectItem value="courier">Entregador</SelectItem>
                         <SelectItem value="client">Cliente</SelectItem>
+                        <SelectItem value="merchant">Restaurante</SelectItem>
                     </SelectContent>
                 </Select>
             </Card>
             <div className="p-4 md:p-6 lg:p-8 pt-0">
-              {isDashboardHome ? (
-                userRole === 'courier' ? <CourierHome name={name} /> : <ClientHome name={name} />
-              ) : childrenWithProps}
+              {isDashboardHome ? renderHome() : childrenWithProps}
             </div>
         </main>
       </SidebarProvider>

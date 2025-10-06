@@ -1,4 +1,4 @@
-import type { Delivery } from './types';
+import type { Delivery, MerchantOrder } from './types';
 
 export const deliveries: Delivery[] = [
   {
@@ -81,4 +81,12 @@ export const deliveries: Delivery[] = [
     deliveryTime: '2024-08-14T19:45:00Z',
     photo: 'https://picsum.photos/seed/p4/200/200'
   }
+];
+
+export const initialMerchantOrders: MerchantOrder[] = [
+    { id: '#1138', customerName: 'Ana Silva', status: 'preparing', time: 'Há 2 min', total: 58.50, items: 2 },
+    { id: '#1137', customerName: 'Bruno Costa', status: 'ready', time: 'Há 5 min', total: 35.00, items: 1 },
+    { id: '#1136', customerName: 'Carlos Pereira', status: 'out_for_delivery', time: 'Há 12 min', total: 90.00, items: 4, courier: { name: 'João D.', rating: 4.8 } },
+    { id: '#1135', customerName: 'Daniela Martins', status: 'delivered', time: 'Há 30 min', total: 25.00, items: 1, courier: { name: 'Maria S.', rating: 4.9 } },
+    { id: '#1134', customerName: 'Eduardo Almeida', status: 'delivered', time: 'Há 45 min', total: 42.00, items: 3, courier: { name: 'João D.', rating: 4.8 } },
 ];
