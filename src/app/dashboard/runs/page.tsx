@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import NewRunCard from '@/components/dashboard/new-run-card';
 import OrderCard from '@/components/dashboard/order-card';
 import MapPlaceholder from '@/components/dashboard/map-placeholder';
@@ -13,19 +13,45 @@ import { CheckCircle, History, List, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
-const newDeliveryOffer: Delivery = {
-  id: 'DEL-NEW-009',
-  customerName: 'Mariana Oliveira',
-  address: 'Avenida Brigadeiro Faria Lima, 4500, São Paulo, SP',
-  restaurant: 'Fast Vegan',
-  status: 'pending',
-  deadline: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
-  earnings: 9.80,
-};
+const newDeliveryOffers: Delivery[] = [
+    {
+      id: 'DEL-NEW-009',
+      customerName: 'Mariana Oliveira',
+      address: 'Avenida Brigadeiro Faria Lima, 4500, São Paulo, SP',
+      restaurant: 'Fast Vegan',
+      status: 'pending',
+      deadline: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
+      earnings: 9.80,
+    },
+    {
+      id: 'DEL-NEW-010',
+      customerName: 'Ricardo Alves',
+      address: 'Rua da Consolação, 2100, São Paulo, SP',
+      restaurant: 'Boteco do Chef',
+      status: 'pending',
+      deadline: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      earnings: 11.20,
+    },
+    {
+      id: 'DEL-NEW-011',
+      customerName: 'Juliana Lima',
+      address: 'Avenida Rebouças, 3970, São Paulo, SP',
+      restaurant: 'Padaria Estrela',
+      status: 'pending',
+      deadline: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
+      earnings: 7.50,
+    },
+];
 
 export default function RunsPage() {
-  const [showNewRun, setShowNewRun] = useState(true);
+  const [showNewRun, setShowNewRun] = useState(false);
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
+
+  const newDeliveryOffer = useMemo(() => {
+    // Pick a random delivery offer each time we want to show one
+    return newDeliveryOffers[Math.floor(Math.random() * newDeliveryOffers.length)];
+  }, [showNewRun]);
+
 
   const activeDeliveries = allDeliveries.filter(d => d.status === 'in_transit' || d.status === 'pending');
   const historicDeliveries = allDeliveries.filter(d => d.status === 'delivered' || d.status === 'cancelled');
@@ -34,7 +60,7 @@ export default function RunsPage() {
     const newDelivery = {...newDeliveryOffer, status: 'in_transit' as const};
     setAllDeliveries(prev => [
         newDelivery,
-        ...prev
+        ...prev.filter(d => d.id !== newDeliveryOffer.id) // Ensure no duplicates
     ]);
     setShowNewRun(false);
   };
@@ -50,6 +76,11 @@ export default function RunsPage() {
       )
     );
   };
+  
+  const handleShowNewRun = () => {
+    // This will trigger the useMemo to re-calculate a new offer
+    setShowNewRun(true);
+  }
 
   return (
     <div className="flex flex-col gap-6 p-1 container">
@@ -58,7 +89,7 @@ export default function RunsPage() {
             <Rocket />
             Corridas
         </h1>
-        <Button onClick={() => setShowNewRun(true)} disabled={showNewRun}>Simular Nova Corrida</Button>
+        <Button onClick={handleShowNewRun} disabled={showNewRun}>Simular Nova Corrida</Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -113,14 +144,14 @@ export default function RunsPage() {
                     </AlertDescription>
                 </Alert>
             )}
-          </TabsContent>
-          <TabsContent value="historic">
+           </TabsContent>
+           <TabsContent value="historic">
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-4">
-              {historicDeliveries.map((delivery) => (
-                <OrderCard key={delivery.id} delivery={delivery} />
-              ))}
-            </div>
-          </TabsContent>
+                {historicDeliveries.map((delivery) => (
+                    <OrderCard key={delivery.id} delivery={delivery} />
+                ))}
+             </div>
+           </TabsContent>
         </Tabs>
       </div>
     </div>
