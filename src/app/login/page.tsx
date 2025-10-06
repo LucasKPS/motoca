@@ -28,15 +28,11 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const { toast } = useToast();
 
-    // THIS EFFECT IS THE PROBLEM AND WILL BE REMOVED.
-    // The DashboardLayout is the single source of truth for protecting routes.
-    /*
     useEffect(() => {
         if (!isUserLoading && user) {
             router.replace('/dashboard');
         }
     }, [user, isUserLoading, router]);
-    */
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();

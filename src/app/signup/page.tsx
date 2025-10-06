@@ -7,7 +7,7 @@ import { Logo } from "@/components/icons";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams, useRouter } from "next/navigation";
-import { User, Briefcase, Bike } from "lucide-react";
+import { User, Briefcase, Bike, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth, useUser } from "@/firebase";
 import { initiateEmailSignUp } from "@/firebase/non-blocking-login";
@@ -116,30 +116,19 @@ export default function SignupPage() {
         }
     }, [user, isUserLoading, router]);
 
-    const handleSignup = async (formData: any) => {
-        try {
-            await initiateEmailSignUp(auth, formData.email, formData.password);
-            // Here you would typically also save the user's role and other details to Firestore
-            // For now, we just sign them up.
-            router.push('/dashboard');
-             toast({
-                title: "Conta criada com sucesso!",
-                description: "Você será redirecionado para o seu painel.",
-            });
-        } catch (error: any) {
-            console.error("Signup Error", error);
-            toast({
-                variant: "destructive",
-                title: "Erro ao criar conta",
-                description: error.message || "Ocorreu um problema, por favor tente novamente.",
-            });
-        }
+    const handleSignup = (formData: any) => {
+        initiateEmailSignUp(auth, formData.email, formData.password);
+        // The onAuthStateChanged listener in DashboardLayout will handle the redirection.
+        toast({
+            title: "Cadastro em progresso...",
+            description: "Você será redirecionado para o seu painel em breve.",
+        });
     };
     
     if (isUserLoading || (!isUserLoading && user)) {
         return (
              <div className="flex min-h-screen items-center justify-center bg-background">
-                <p>Carregando...</p>
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div>
         )
     }
