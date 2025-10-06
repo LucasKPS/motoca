@@ -68,8 +68,15 @@ export default function DashboardLayout({
   const [userRole, setUserRole] = useState<UserRole>(getInitialRole());
 
   useEffect(() => {
-    setUserRole(getInitialRole());
-  }, [roleQuery]);
+    const currentRole = getInitialRole();
+    setUserRole(currentRole);
+    // Keep URL in sync with the role
+    const params = new URLSearchParams(searchParams);
+    if (params.get('role') !== currentRole) {
+        params.set('role', currentRole);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [roleQuery, user]);
 
 
   const handleRoleChange = (role: UserRole) => {
@@ -77,7 +84,7 @@ export default function DashboardLayout({
     localStorage.setItem('userRole', role);
     const params = new URLSearchParams(searchParams);
     params.set('role', role);
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`/dashboard?${params.toString()}`);
   };
 
   // Courier State
@@ -86,7 +93,7 @@ export default function DashboardLayout({
   const [newDeliveryOffer, setNewDeliveryOffer] = useState<Delivery | null>(null);
   
   // Profile & Settings State (shared)
-  const [name, setName] = useState(user?.displayName ?? (userRole === 'courier' ? 'João da Silva' : 'Ana Cliente'));
+  const [name, setName] = useState(user?.displayName ?? '');
   const [phone, setPhone] = useState('(11) 99999-8888');
   const [vehicle, setVehicle] = useState('moto');
   const [plate, setPlate] = useState('BRA2E19');
@@ -133,8 +140,10 @@ export default function DashboardLayout({
   }, [user, isUserLoading, router]);
   
    useEffect(() => {
-    setName(userRole === 'courier' ? 'João da Silva' : 'Ana Cliente');
-  }, [userRole]);
+    if (!name) {
+      setName(userRole === 'courier' ? 'João da Silva' : 'Ana Cliente');
+    }
+  }, [userRole, name]);
 
 
   if (isUserLoading || !user) {
@@ -147,38 +156,38 @@ export default function DashboardLayout({
 
   const childrenWithProps = Children.map(children, child => {
     if (isValidElement(child)) {
-      // Pass props for courier pages
-      if (userRole === 'courier') {
-          return cloneElement(child as React.ReactElement<any>, { 
-            deliveries: allDeliveries, 
-            handleConfirmDelivery,
-            newDeliveryOffer,
-            showNewRun,
-            onAcceptRun: handleAccept,
-            onDeclineRun: handleDecline,
-            onShowNewRun: handleShowNewRun,
+        const isDashboardHome = pathname === '/dashboard';
+        
+        // Don't pass props to the homepage placeholder
+        if (isDashboardHome) return child;
 
-            name, setName,
-            phone, setPhone,
-            vehicle, setVehicle,
-            plate, setPlate,
-            avatarUrl, setAvatarUrl,
-            notifyNewRuns, setNotifyNewRuns,
-            notifyPromos, setNotifyPromos,
-            notifySummary, setNotifySummary,
-          });
-      }
-      // Pass props for client pages
-      if (userRole === 'client') {
-           return cloneElement(child as React.ReactElement<any>, { 
+        const commonProps = {
             name, setName,
             phone, setPhone,
             avatarUrl, setAvatarUrl,
-            notifyNewRuns, setNotifyNewRuns,
             notifyPromos, setNotifyPromos,
             notifySummary, setNotifySummary,
-          });
-      }
+        };
+
+        if (userRole === 'courier') {
+            return cloneElement(child as React.ReactElement<any>, {
+                ...commonProps,
+                deliveries: allDeliveries, 
+                handleConfirmDelivery,
+                newDeliveryOffer,
+                showNewRun,
+                onAcceptRun: handleAccept,
+                onDeclineRun: handleDecline,
+                onShowNewRun: handleShowNewRun,
+                vehicle, setVehicle,
+                plate, setPlate,
+                notifyNewRuns, setNotifyNewRuns,
+            });
+        }
+        
+        if (userRole === 'client') {
+            return cloneElement(child as React.ReactElement<any>, commonProps);
+        }
     }
     return child;
   });

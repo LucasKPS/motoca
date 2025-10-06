@@ -27,9 +27,8 @@ const courierSidebarItems = [
 
 const clientSidebarItems = [
     { href: '/dashboard', label: 'Início', icon: Home },
-    { href: '/dashboard/order', label: 'Fazer Pedido', icon: ShoppingCart },
-    { href: '/dashboard/my-orders', label: 'Meus Pedidos', icon: ListOrdered },
     { href: '/dashboard/restaurants', label: 'Restaurantes', icon: Utensils },
+    { href: '/dashboard/my-orders', label: 'Meus Pedidos', icon: ListOrdered },
     { href: '/dashboard/profile', label: 'Meu Perfil', icon: User },
     { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
 ]
@@ -47,13 +46,6 @@ export default function DashboardSidebar({ userRole = 'courier' }: { userRole: '
     router.push('/login');
   }
 
-  // Hide some items for client role on certain pages
-  const isClientAndNotHome = userRole === 'client' && pathname !== '/dashboard';
-  const visibleItems = isClientAndNotHome 
-    ? sidebarItems.filter(item => ['/dashboard', '/dashboard/my-orders', '/dashboard/profile', '/dashboard/settings'].includes(item.href))
-    : sidebarItems;
-
-
   return (
     <Sidebar>
       <SidebarHeader>
@@ -65,28 +57,19 @@ export default function DashboardSidebar({ userRole = 'courier' }: { userRole: '
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {visibleItems.map((item) => {
-            // For client, only 'Início' is active on the root, others are exact matches
-            const isActive = userRole === 'client' 
-                ? (item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href) && item.href !== '/dashboard')
-                : pathname === item.href;
-            
-            // Client specific logic for href
-            const href = userRole === 'client' && item.href === '/dashboard' ? '/dashboard?role=client' : item.href;
-
-            if (userRole === 'client' && (item.label === 'Fazer Pedido' || item.label === 'Restaurantes')) {
-                return null;
-            }
+          {sidebarItems.map((item) => {
+            const isActive = pathname === item.href;
+            const href = userRole === 'client' ? `${item.href}?role=client` : item.href;
 
             return (
                 <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={isActive}
                     tooltip={item.label}
                     className="justify-start"
                 >
-                    <Link href={item.href}>
+                    <Link href={href}>
                     <item.icon />
                     <span>{item.label}</span>
                     </Link>
