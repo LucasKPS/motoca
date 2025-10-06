@@ -4,6 +4,8 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import DashboardSidebar from './_components/sidebar';
 
 export default function DashboardLayout({
   children,
@@ -27,5 +29,12 @@ export default function DashboardLayout({
     );
   }
 
-  return <>{children}</>;
+  return (
+      <SidebarProvider>
+        <DashboardSidebar />
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+            {children}
+        </main>
+      </SidebarProvider>
+  );
 }

@@ -8,8 +8,8 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { User, Briefcase, Bike } from "lucide-react";
-import { useState } from "react";
-import { useAuth } from "@/firebase";
+import { useState, useEffect } from "react";
+import { useAuth, useUser } from "@/firebase";
 import { initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useToast } from "@/hooks/use-toast";
 
@@ -107,11 +107,18 @@ export default function SignupPage() {
     const role = (roleParam === 'client' || roleParam === 'merchant' || roleParam === 'courier') ? roleParam : 'client';
     
     const auth = useAuth();
+    const { user, isUserLoading } = useUser();
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (!isUserLoading && user) {
+            router.replace('/dashboard');
+        }
+    }, [user, isUserLoading, router]);
 
     const handleSignup = async (formData: any) => {
         try {
-            initiateEmailSignUp(auth, formData.email, formData.password);
+            await initiateEmailSignUp(auth, formData.email, formData.password);
             // Here you would typically also save the user's role and other details to Firestore
             // For now, we just sign them up.
             router.push('/dashboard');
@@ -128,6 +135,14 @@ export default function SignupPage() {
             });
         }
     };
+    
+    if (isUserLoading || (!isUserLoading && user)) {
+        return (
+             <div className="flex min-h-screen items-center justify-center bg-background">
+                <p>Carregando...</p>
+            </div>
+        )
+    }
 
     const metadata = {
         client: {

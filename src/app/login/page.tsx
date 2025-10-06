@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/icons";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { initiateEmailSignIn } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -21,19 +21,35 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function LoginPage() {
     const auth = useAuth();
+    const { user, isUserLoading } = useUser();
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { toast } = useToast();
 
+    useEffect(() => {
+        if (!isUserLoading && user) {
+            router.replace('/dashboard');
+        }
+    }, [user, isUserLoading, router]);
+
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         initiateEmailSignIn(auth, email, password);
-        router.push('/dashboard');
+        // We don't redirect here immediately. The onAuthStateChanged listener
+        // in a protected layout will handle the redirection to the dashboard.
         toast({
-            title: "Login em progresso",
+            title: "Login em progresso...",
             description: "Você será redirecionado em breve.",
         });
+    }
+    
+    if (isUserLoading || (!isUserLoading && user)) {
+        return (
+             <div className="flex min-h-screen items-center justify-center bg-background">
+                <p>Carregando...</p>
+            </div>
+        )
     }
 
     return (
