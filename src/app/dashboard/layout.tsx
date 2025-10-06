@@ -1,13 +1,17 @@
 'use client';
 
 import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState, Children, cloneElement, isValidElement, useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Children, cloneElement, isValidElement } from 'react';
+import { Loader2, Users } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import DashboardSidebar from './_components/sidebar';
 import type { Delivery } from '@/lib/types';
 import { deliveries } from '@/lib/data';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
+import CourierHome from './_components/courier-home';
+import ClientHome from './_components/client-home';
 
 const newDeliveryOffers: Delivery[] = [
     {
@@ -39,6 +43,7 @@ const newDeliveryOffers: Delivery[] = [
     },
 ];
 
+type UserRole = 'client' | 'courier';
 
 export default function DashboardLayout({
   children,
@@ -47,13 +52,26 @@ export default function DashboardLayout({
 }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const roleQuery = searchParams.get('role');
+  const [userRole, setUserRole] = useState<UserRole>((roleQuery === 'client' ? 'client' : 'courier'));
 
+  const handleRoleChange = (role: UserRole) => {
+    setUserRole(role);
+    const params = new URLSearchParams(searchParams);
+    params.set('role', role);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Courier State
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
   const [showNewRun, setShowNewRun] = useState(false);
   const [newDeliveryOffer, setNewDeliveryOffer] = useState<Delivery | null>(null);
   
-  // Profile & Settings State
-  const [name, setName] = useState(user?.displayName ?? 'João da Silva');
+  // Profile & Settings State (shared)
+  const [name, setName] = useState(user?.displayName ?? (userRole === 'courier' ? 'João da Silva' : 'Ana Cliente'));
   const [phone, setPhone] = useState('(11) 99999-8888');
   const [vehicle, setVehicle] = useState('moto');
   const [plate, setPlate] = useState('BRA2E19');
@@ -98,6 +116,11 @@ export default function DashboardLayout({
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
+  
+   useEffect(() => {
+    setName(userRole === 'courier' ? 'João da Silva' : 'Ana Cliente');
+  }, [userRole]);
+
 
   if (isUserLoading || !user) {
     return (
@@ -109,34 +132,69 @@ export default function DashboardLayout({
 
   const childrenWithProps = Children.map(children, child => {
     if (isValidElement(child)) {
-      return cloneElement(child as React.ReactElement<any>, { 
-        deliveries: allDeliveries, 
-        handleConfirmDelivery,
-        newDeliveryOffer,
-        showNewRun,
-        onAcceptRun: handleAccept,
-        onDeclineRun: handleDecline,
-        onShowNewRun: handleShowNewRun,
+      // Pass props for courier pages
+      if (userRole === 'courier') {
+          return cloneElement(child as React.ReactElement<any>, { 
+            deliveries: allDeliveries, 
+            handleConfirmDelivery,
+            newDeliveryOffer,
+            showNewRun,
+            onAcceptRun: handleAccept,
+            onDeclineRun: handleDecline,
+            onShowNewRun: handleShowNewRun,
 
-        // Profile & Settings Props
-        name, setName,
-        phone, setPhone,
-        vehicle, setVehicle,
-        plate, setPlate,
-        avatarUrl, setAvatarUrl,
-        notifyNewRuns, setNotifyNewRuns,
-        notifyPromos, setNotifyPromos,
-        notifySummary, setNotifySummary,
-      });
+            name, setName,
+            phone, setPhone,
+            vehicle, setVehicle,
+            plate, setPlate,
+            avatarUrl, setAvatarUrl,
+            notifyNewRuns, setNotifyNewRuns,
+            notifyPromos, setNotifyPromos,
+            notifySummary, setNotifySummary,
+          });
+      }
+      // Pass props for client pages
+      if (userRole === 'client') {
+           return cloneElement(child as React.ReactElement<any>, { 
+            name, setName,
+            phone, setPhone,
+            avatarUrl, setAvatarUrl,
+            notifyNewRuns, setNotifyNewRuns,
+            notifyPromos, setNotifyPromos,
+            notifySummary, setNotifySummary,
+          });
+      }
     }
     return child;
   });
 
+  const isDashboardHome = pathname === '/dashboard';
+
   return (
       <SidebarProvider>
-        <DashboardSidebar />
-        <main className="ml-[3rem] flex-1 p-4 md:p-6 lg:p-8">
-            {childrenWithProps}
+        <DashboardSidebar userRole={userRole} />
+        <main className="ml-[3rem] flex-1">
+             <Card className="m-4 p-4 border-dashed flex items-center gap-4">
+                <Users className="w-5 h-5 text-muted-foreground" />
+                <div className="flex-1">
+                    <h3 className="font-semibold">Simulação de Papel</h3>
+                    <p className="text-sm text-muted-foreground">Alterne entre a visão de Cliente e Entregador para ver as diferentes interfaces.</p>
+                </div>
+                <Select value={userRole} onValueChange={handleRoleChange}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Selecionar Papel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="courier">Entregador</SelectItem>
+                        <SelectItem value="client">Cliente</SelectItem>
+                    </SelectContent>
+                </Select>
+            </Card>
+            <div className="p-4 md:p-6 lg:p-8 pt-0">
+              {isDashboardHome ? (
+                userRole === 'courier' ? <CourierHome name={name} /> : <ClientHome name={name} />
+              ) : childrenWithProps}
+            </div>
         </main>
       </SidebarProvider>
   );
