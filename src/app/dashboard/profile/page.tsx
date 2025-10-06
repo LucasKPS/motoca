@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +14,40 @@ import { useRouter } from "next/navigation";
 import type { Delivery } from "@/lib/types";
 import { useToast } from '@/hooks/use-toast';
 
-export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[] }) {
+interface ProfilePageProps {
+    deliveries?: Delivery[];
+    name?: string;
+    vehicle?: string;
+    setVehicle?: (value: string) => void;
+    plate?: string;
+    setPlate?: (value: string) => void;
+    notifyNewRuns?: boolean;
+    setNotifyNewRuns?: (value: boolean) => void;
+    notifyPromos?: boolean;
+    setNotifyPromos?: (value: boolean) => void;
+    avatarUrl?: string;
+    setAvatarUrl?: (value: string) => void;
+}
+
+
+export default function ProfilePage({ 
+    deliveries = [],
+    name,
+    vehicle = 'moto',
+    setVehicle = () => {},
+    plate = 'BRA2E19',
+    setPlate = () => {},
+    notifyNewRuns = true,
+    setNotifyNewRuns = () => {},
+    notifyPromos = false,
+    setNotifyPromos = () => {},
+    avatarUrl = '',
+    setAvatarUrl = () => {},
+}: ProfilePageProps) {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-
-  const [vehicle, setVehicle] = useState('moto');
-  const [plate, setPlate] = useState('BRA2E19');
-  const [newRunNotifications, setNewRunNotifications] = useState(true);
-  const [promoNotifications, setPromoNotifications] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
@@ -75,9 +98,9 @@ export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[
                 <CardHeader className="items-center text-center">
                     <Avatar className="w-24 h-24 mb-4">
                         <AvatarImage src={avatarUrl} />
-                        <AvatarFallback>{user?.displayName?.charAt(0) ?? user?.email?.charAt(0) ?? 'U'}</AvatarFallback>
+                        <AvatarFallback>{name?.charAt(0) ?? user?.email?.charAt(0) ?? 'U'}</AvatarFallback>
                     </Avatar>
-                    <CardTitle className="font-headline">{user?.displayName ?? 'Usuário'}</CardTitle>
+                    <CardTitle className="font-headline">{name ?? 'Usuário'}</CardTitle>
                     <CardDescription>{user?.email}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
@@ -161,11 +184,11 @@ export default function ProfilePage({ deliveries = [] }: { deliveries: Delivery[
                     <Label>Notificações</Label>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                         <p className="text-sm">Novas corridas</p>
-                        <Switch checked={newRunNotifications} onCheckedChange={setNewRunNotifications} />
+                        <Switch checked={notifyNewRuns} onCheckedChange={setNotifyNewRuns} />
                     </div>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                         <p className="text-sm">Promoções e avisos</p>
-                        <Switch checked={promoNotifications} onCheckedChange={setPromoNotifications} />
+                        <Switch checked={notifyPromos} onCheckedChange={setNotifyPromos} />
                     </div>
                 </div>
 

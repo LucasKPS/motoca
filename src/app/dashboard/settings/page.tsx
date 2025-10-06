@@ -1,5 +1,4 @@
 'use client'
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,16 +10,35 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
 import type { Delivery } from "@/lib/types";
 
-export default function SettingsPage({ deliveries = [] }: { deliveries: Delivery[] }) {
+interface SettingsPageProps {
+    deliveries?: Delivery[];
+    name?: string;
+    setName?: (value: string) => void;
+    phone?: string;
+    setPhone?: (value: string) => void;
+    notifyNewRuns?: boolean;
+    setNotifyNewRuns?: (value: boolean) => void;
+    notifyPromos?: boolean;
+    setNotifyPromos?: (value: boolean) => void;
+    notifySummary?: boolean;
+    setNotifySummary?: (value: boolean) => void;
+}
+
+export default function SettingsPage({ 
+    deliveries = [],
+    name = '',
+    setName = () => {},
+    phone = '',
+    setPhone = () => {},
+    notifyNewRuns = true,
+    setNotifyNewRuns = () => {},
+    notifyPromos = true,
+    setNotifyPromos = () => {},
+    notifySummary = false,
+    setNotifySummary = () => {},
+}: SettingsPageProps) {
     const { user } = useUser();
     const { toast } = useToast();
-
-    const [name, setName] = useState(user?.displayName ?? 'João da Silva');
-    const [phone, setPhone] = useState('(11) 99999-8888');
-    
-    const [notifyNewRuns, setNotifyNewRuns] = useState(true);
-    const [notifyPromos, setNotifyPromos] = useState(true);
-    const [notifySummary, setNotifySummary] = useState(false);
 
     const handleSaveInfo = () => {
         toast({

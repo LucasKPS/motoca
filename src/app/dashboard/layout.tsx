@@ -50,6 +50,16 @@ export default function DashboardLayout({
 
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
   const [showNewRun, setShowNewRun] = useState(false);
+  
+  // Profile & Settings State
+  const [name, setName] = useState(user?.displayName ?? 'João da Silva');
+  const [phone, setPhone] = useState('(11) 99999-8888');
+  const [vehicle, setVehicle] = useState('moto');
+  const [plate, setPlate] = useState('BRA2E19');
+  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`);
+  const [notifyNewRuns, setNotifyNewRuns] = useState(true);
+  const [notifyPromos, setNotifyPromos] = useState(true);
+  const [notifySummary, setNotifySummary] = useState(false);
 
   const newDeliveryOffer = useMemo(() => {
     if (!showNewRun || newDeliveryOffers.length === 0) return null;
@@ -100,7 +110,6 @@ export default function DashboardLayout({
 
   const childrenWithProps = Children.map(children, child => {
     if (isValidElement(child)) {
-      // Pass all relevant state and handlers to every child page in the dashboard.
       return cloneElement(child as React.ReactElement<any>, { 
         deliveries: allDeliveries, 
         handleConfirmDelivery,
@@ -109,6 +118,16 @@ export default function DashboardLayout({
         onAcceptRun: handleAccept,
         onDeclineRun: handleDecline,
         onShowNewRun: handleShowNewRun,
+
+        // Profile & Settings Props
+        name, setName,
+        phone, setPhone,
+        vehicle, setVehicle,
+        plate, setPlate,
+        avatarUrl, setAvatarUrl,
+        notifyNewRuns, setNotifyNewRuns,
+        notifyPromos, setNotifyPromos,
+        notifySummary, setNotifySummary,
       });
     }
     return child;
