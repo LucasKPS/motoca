@@ -13,46 +13,27 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 interface RunsPageProps {
-    deliveries: Delivery[];
-    newDeliveryOffers: Delivery[];
-    handleConfirmDelivery: (deliveryId: string) => void;
-    handleAccept: (delivery: Delivery) => void;
+    deliveries?: Delivery[];
+    handleConfirmDelivery?: (deliveryId: string) => void;
+    newDeliveryOffer?: Delivery | null;
+    showNewRun?: boolean;
+    onAcceptRun?: () => void;
+    onDeclineRun?: () => void;
+    onShowNewRun?: () => void;
 }
 
 export default function RunsPage({ 
     deliveries = [], 
-    newDeliveryOffers = [], 
-    handleConfirmDelivery, 
-    handleAccept 
+    handleConfirmDelivery = () => {}, 
+    newDeliveryOffer = null,
+    showNewRun = false,
+    onAcceptRun = () => {},
+    onDeclineRun = () => {},
+    onShowNewRun = () => {},
 }: RunsPageProps) {
-  const [showNewRun, setShowNewRun] = useState(false);
   
-  // newDeliveryOffer is now memoized and will only re-calculate when a new run is shown
-  const newDeliveryOffer = useMemo(() => {
-    if (!showNewRun || newDeliveryOffers.length === 0) return null;
-    // Pick a random delivery offer each time we want to show one
-    return newDeliveryOffers[Math.floor(Math.random() * newDeliveryOffers.length)];
-  }, [showNewRun, newDeliveryOffers]);
-
   const activeDeliveries = deliveries.filter(d => d.status === 'in_transit' || d.status === 'pending');
   const historicDeliveries = deliveries.filter(d => d.status === 'delivered' || d.status === 'cancelled');
-  
-  const onAcceptRun = () => {
-      if(newDeliveryOffer) {
-          handleAccept(newDeliveryOffer);
-          setShowNewRun(false);
-      }
-  }
-
-  const onDeclineRun = () => {
-    setShowNewRun(false);
-  };
-  
-  // This function is just to trigger the recalculation of the memo
-  const handleShowNewRun = () => {
-    setShowNewRun(false); // Reset first to ensure effect triggers
-    setTimeout(() => setShowNewRun(true), 0);
-  }
 
   return (
     <div className="flex flex-col gap-6 p-1 container">
@@ -61,7 +42,7 @@ export default function RunsPage({
             <Rocket />
             Corridas
         </h1>
-        <Button onClick={handleShowNewRun} disabled={showNewRun}>Simular Nova Corrida</Button>
+        <Button onClick={onShowNewRun} disabled={showNewRun}>Simular Nova Corrida</Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

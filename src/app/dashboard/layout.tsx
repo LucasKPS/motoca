@@ -2,7 +2,7 @@
 
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, Children, cloneElement, isValidElement } from 'react';
+import { useEffect, useState, Children, cloneElement, isValidElement, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import DashboardSidebar from './_components/sidebar';
@@ -49,14 +49,32 @@ export default function DashboardLayout({
   const router = useRouter();
 
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
+  const [showNewRun, setShowNewRun] = useState(false);
+
+  const newDeliveryOffer = useMemo(() => {
+    if (!showNewRun || newDeliveryOffers.length === 0) return null;
+    return newDeliveryOffers[Math.floor(Math.random() * newDeliveryOffers.length)];
+  }, [showNewRun]);
   
-  const handleAccept = (newDeliveryOffer: Delivery) => {
-    const newDelivery = {...newDeliveryOffer, status: 'in_transit' as const};
-    setAllDeliveries(prev => [
-        newDelivery,
-        ...prev.filter(d => d.id !== newDeliveryOffer.id)
-    ]);
+  const handleAccept = () => {
+    if (newDeliveryOffer) {
+        const newDelivery = {...newDeliveryOffer, status: 'in_transit' as const};
+        setAllDeliveries(prev => [
+            newDelivery,
+            ...prev.filter(d => d.id !== newDeliveryOffer.id)
+        ]);
+        setShowNewRun(false);
+    }
   };
+
+  const handleDecline = () => {
+    setShowNewRun(false);
+  }
+
+  const handleShowNewRun = () => {
+    setShowNewRun(false); // Reset first to ensure effect triggers
+    setTimeout(() => setShowNewRun(true), 0);
+  }
 
   const handleConfirmDelivery = (deliveryId: string) => {
     setAllDeliveries(prev => 
@@ -82,13 +100,15 @@ export default function DashboardLayout({
 
   const childrenWithProps = Children.map(children, child => {
     if (isValidElement(child)) {
-      // Here, we're assuming the child component can accept these props.
-      // This is a common pattern for this kind of state sharing.
+      // Pass all relevant state and handlers to every child page in the dashboard.
       return cloneElement(child as React.ReactElement<any>, { 
         deliveries: allDeliveries, 
         handleConfirmDelivery,
-        handleAccept,
-        newDeliveryOffers
+        newDeliveryOffer,
+        showNewRun,
+        onAcceptRun: handleAccept,
+        onDeclineRun: handleDecline,
+        onShowNewRun: handleShowNewRun,
       });
     }
     return child;
