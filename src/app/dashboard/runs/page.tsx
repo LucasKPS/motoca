@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle, History, List, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 const newDeliveryOffer: Delivery = {
   id: 'DEL-NEW-009',
