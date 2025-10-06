@@ -8,17 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth, useUser } from "@/firebase";
-import { deliveries } from "@/lib/data";
 import { Bike, DollarSign, Edit, Star, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { Delivery } from "@/lib/types";
 
-export default function ProfilePage() {
+
+export default function ProfilePage({ deliveries }: { deliveries: Delivery[] }) {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
 
-  const totalDeliveries = deliveries.length;
-  const totalEarnings = deliveries.reduce((acc, d) => acc + d.earnings, 0);
+  const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
+  const totalDeliveries = deliveredDeliveries.length;
+  const totalEarnings = deliveredDeliveries.reduce((acc, d) => acc + d.earnings, 0);
 
   const handleLogout = () => {
     auth.signOut();

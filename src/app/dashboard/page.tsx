@@ -1,5 +1,7 @@
+'use client';
+import type { Delivery } from "@/lib/types";
 
-export default function DashboardPage() {
+export default function DashboardPage({ deliveries }: { deliveries: Delivery[] }) {
     // No futuro, esta página irá verificar o tipo de usuário (cliente, restaurante, entregador)
     // e renderizar o painel correspondente.
     // Por agora, vamos mostrar uma mensagem genérica.

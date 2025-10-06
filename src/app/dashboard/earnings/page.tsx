@@ -3,18 +3,19 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DollarSign, Truck, Calendar, TrendingUp } from "lucide-react";
 import EarningsChart from "@/components/earnings/earnings-chart";
-import { deliveries } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import type { Delivery } from "@/lib/types";
 
-export default function EarningsPage() {
-    const totalEarnings = deliveries.reduce((acc, d) => acc + d.earnings, 0);
-    const totalDeliveries = deliveries.length;
-    const bestEarning = Math.max(...deliveries.map(d => d.earnings));
-    const averageEarning = totalEarnings / totalDeliveries;
+export default function EarningsPage({ deliveries }: { deliveries: Delivery[] }) {
+    const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
+
+    const totalEarnings = deliveredDeliveries.reduce((acc, d) => acc + d.earnings, 0);
+    const totalDeliveries = deliveredDeliveries.length;
+    const bestEarning = totalDeliveries > 0 ? Math.max(...deliveredDeliveries.map(d => d.earnings)) : 0;
+    const averageEarning = totalDeliveries > 0 ? totalEarnings / totalDeliveries : 0;
     
-    const recentDeliveries = deliveries.slice(0, 5);
+    const recentDeliveries = deliveredDeliveries.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-8 p-4 container">
@@ -42,24 +43,24 @@ export default function EarningsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ganhos (Semana)</CardTitle>
+            <CardTitle className="text-sm font-medium">Ganhos (Total)</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
                 {totalEarnings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </div>
-            <p className="text-xs text-muted-foreground">+5.2% em relação à semana passada</p>
+            <p className="text-xs text-muted-foreground">Soma de todas as entregas concluídas</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Corridas (Semana)</CardTitle>
+            <CardTitle className="text-sm font-medium">Corridas Concluídas</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalDeliveries}</div>
-            <p className="text-xs text-muted-foreground">+2 corridas em relação à semana passada</p>
+            <p className="text-xs text-muted-foreground">Total de entregas finalizadas</p>
           </CardContent>
         </Card>
         <Card>
@@ -71,7 +72,7 @@ export default function EarningsPage() {
             <div className="text-2xl font-bold">
                 {averageEarning.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </div>
-             <p className="text-xs text-muted-foreground">Média da semana</p>
+             <p className="text-xs text-muted-foreground">Média geral</p>
           </CardContent>
         </Card>
         <Card>
@@ -83,7 +84,7 @@ export default function EarningsPage() {
             <div className="text-2xl font-bold">
                 {bestEarning.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </div>
-            <p className="text-xs text-muted-foreground">Corrida de Sábado, 21h</p>
+            <p className="text-xs text-muted-foreground">Recorde de ganho em uma única corrida</p>
           </CardContent>
         </Card>
       </div>
