@@ -24,11 +24,11 @@ interface RunsPageProps {
 export default function RunsPage({ 
     deliveries = [], 
     handleConfirmDelivery = () => {}, 
-    newDeliveryOffer = null,
-    showNewRun = false,
+    newDeliveryOffer,
+    showNewRun,
     onAcceptRun = () => {},
     onDeclineRun = () => {},
-    onShowNewRun,
+    onShowNewRun = () => {},
 }: RunsPageProps) {
   
   const activeDeliveries = deliveries.filter(d => d.status === 'in_transit' || d.status === 'pending');
