@@ -26,6 +26,7 @@ const menuItemSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, { message: "O preço deve ser maior que zero." }),
   category: z.string().min(2, { message: "A categoria é obrigatória." }),
+  imageUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida." }).optional().or(z.literal('')),
 });
 
 type MenuItemFormValues = z.infer<typeof menuItemSchema>;
@@ -46,14 +47,17 @@ export function MenuItemDialog({ isOpen, onOpenChange, item, onSave }: MenuItemD
       description: '',
       price: 0,
       category: '',
+      imageUrl: '',
     },
   });
 
   useEffect(() => {
-    if (item) {
-      form.reset(item);
-    } else {
-      form.reset({ id: undefined, name: '', description: '', price: 0, category: '' });
+    if (isOpen) {
+      if (item) {
+        form.reset(item);
+      } else {
+        form.reset({ id: undefined, name: '', description: '', price: 0, category: '', imageUrl: '' });
+      }
     }
   }, [item, form, isOpen]);
 
@@ -65,7 +69,7 @@ export function MenuItemDialog({ isOpen, onOpenChange, item, onSave }: MenuItemD
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle className="font-headline">{item ? 'Editar Item' : 'Adicionar Novo Item'}</DialogTitle>
           <DialogDescription>
@@ -82,6 +86,19 @@ export function MenuItemDialog({ isOpen, onOpenChange, item, onSave }: MenuItemD
                   <FormLabel>Nome do Item</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Pizza Margherita" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL da Imagem</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://exemplo.com/imagem.png" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -106,7 +123,7 @@ export function MenuItemDialog({ isOpen, onOpenChange, item, onSave }: MenuItemD
                 name="price"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Preço</FormLabel>
+                    <FormLabel>Preço (R$)</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 45.50" {...field} />
                     </FormControl>

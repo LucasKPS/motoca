@@ -92,9 +92,9 @@ export const initialMerchantOrders: MerchantOrder[] = [
 ];
 
 export const initialMenuItems: MenuItem[] = [
-    { id: 'item-1', name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão fresco.', price: 45.00, category: 'Pizzas Salgadas' },
-    { id: 'item-2', name: 'Pizza Calabresa', description: 'Molho de tomate, mussarela, calabresa e cebola.', price: 48.50, category: 'Pizzas Salgadas' },
-    { id: 'item-3', name: 'Pizza Romeu e Julieta', description: 'Mussarela, goiabada e um toque de canela.', price: 52.00, category: 'Pizzas Doces' },
-    { id: 'item-4', name: 'Coca-Cola 2L', description: 'Refrigerante Coca-Cola, garrafa de 2 litros.', price: 12.00, category: 'Bebidas' },
-    { id: 'item-5', name: 'Água Mineral 500ml', description: 'Água sem gás.', price: 5.00, category: 'Bebidas' },
+    { id: 'item-1', name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão fresco.', price: 45.00, category: 'Pizzas Salgadas', imageUrl: 'https://images.unsplash.com/photo-1595854337175-7420a42875af?q=80&w=1974&auto=format&fit=crop' },
+    { id: 'item-2', name: 'Pizza Calabresa', description: 'Molho de tomate, mussarela, calabresa e cebola.', price: 48.50, category: 'Pizzas Salgadas', imageUrl: 'https://images.unsplash.com/photo-1593560704563-f176a2eb61db?q=80&w=2070&auto=format&fit=crop' },
+    { id: 'item-3', name: 'Pizza Romeu e Julieta', description: 'Mussarela, goiabada e um toque de canela.', price: 52.00, category: 'Pizzas Doces', imageUrl: 'https://images.unsplash.com/photo-1594007654729-407eedc4be65?q=80&w=1974&auto=format&fit=crop' },
+    { id: 'item-4', name: 'Coca-Cola 2L', description: 'Refrigerante Coca-Cola, garrafa de 2 litros.', price: 12.00, category: 'Bebidas', imageUrl: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?q=80&w=1964&auto=format&fit=crop' },
+    { id: 'item-5', name: 'Água Mineral 500ml', description: 'Água sem gás.', price: 5.00, category: 'Bebidas', imageUrl: 'https://images.unsplash.com/photo-1588253685165-17a864789574?q=80&w=1974&auto=format&fit=crop' },
 ];

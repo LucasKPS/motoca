@@ -38,4 +38,5 @@ export type MenuItem = {
   description?: string;
   price: number;
   category: string;
+  imageUrl?: string;
 }
