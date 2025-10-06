@@ -21,7 +21,7 @@ const sidebarItems = [
     { href: '/dashboard', label: 'Início', icon: Home },
     { href: '/dashboard/runs', label: 'Corridas', icon: Truck },
     { href: '/dashboard/earnings', label: 'Ganhos', icon: DollarSign },
-    { href: '/profile', label: 'Meu Perfil', icon: User },
+    { href: '/dashboard/profile', label: 'Meu Perfil', icon: User },
     { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
 ]
 
