@@ -50,6 +50,7 @@ export default function DashboardLayout({
 
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>(deliveries);
   const [showNewRun, setShowNewRun] = useState(false);
+  const [newDeliveryOffer, setNewDeliveryOffer] = useState<Delivery | null>(null);
   
   // Profile & Settings State
   const [name, setName] = useState(user?.displayName ?? 'João da Silva');
@@ -60,11 +61,6 @@ export default function DashboardLayout({
   const [notifyNewRuns, setNotifyNewRuns] = useState(true);
   const [notifyPromos, setNotifyPromos] = useState(true);
   const [notifySummary, setNotifySummary] = useState(false);
-
-  const newDeliveryOffer = useMemo(() => {
-    if (!showNewRun || newDeliveryOffers.length === 0) return null;
-    return newDeliveryOffers[Math.floor(Math.random() * newDeliveryOffers.length)];
-  }, [showNewRun]);
   
   const handleAccept = () => {
     if (newDeliveryOffer) {
@@ -74,16 +70,19 @@ export default function DashboardLayout({
             ...prev.filter(d => d.id !== newDeliveryOffer.id)
         ]);
         setShowNewRun(false);
+        setNewDeliveryOffer(null);
     }
   };
 
   const handleDecline = () => {
     setShowNewRun(false);
+    setNewDeliveryOffer(null);
   }
 
   const handleShowNewRun = () => {
-    setShowNewRun(false); // Reset first to ensure effect triggers
-    setTimeout(() => setShowNewRun(true), 0);
+    const offer = newDeliveryOffers[Math.floor(Math.random() * newDeliveryOffers.length)];
+    setNewDeliveryOffer(offer);
+    setShowNewRun(true);
   }
 
   const handleConfirmDelivery = (deliveryId: string) => {
