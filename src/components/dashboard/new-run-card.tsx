@@ -1,4 +1,3 @@
-
 import type { Delivery } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,4 +59,4 @@ const NewRunCard = ({ delivery, onAccept, onDecline }: NewRunCardProps) => {
 
 export default NewRunCard;
 
-    
+

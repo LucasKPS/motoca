@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Package, Store, CheckCircle } from "lucide-react";
 import { DeliveryConfirmationDialog } from "./delivery-confirmation-dialog";
-import { useEffect, useState } from "react";
 
 interface OrderCardProps {
   delivery: Delivery;
@@ -22,11 +21,6 @@ const statusMap: Record<Delivery['status'], { label: string; color: "default" | 
 
 const OrderCard = ({ delivery, onConfirmDelivery }: OrderCardProps) => {
   const statusInfo = statusMap[delivery.status];
-  const [formattedDeadline, setFormattedDeadline] = useState('');
-
-  useEffect(() => {
-    setFormattedDeadline(new Date(delivery.deadline).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-  }, [delivery.deadline]);
 
   return (
     <Card className="flex flex-col">
@@ -44,14 +38,10 @@ const OrderCard = ({ delivery, onConfirmDelivery }: OrderCardProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-2">
-        <p className="flex items-start gap-2 text-sm">
-          <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+        <div className="flex items-center gap-2 text-sm">
+          <MapPin className="w-4 h-4 text-muted-foreground" />
           <span>{delivery.address}</span>
-        </p>
-        <p className="flex items-center gap-2 text-sm">
-          <Clock className="w-4 h-4 shrink-0 text-muted-foreground" />
-          <span>Prazo: {formattedDeadline}</span>
-        </p>
+        </div>
       </CardContent>
       <CardFooter>
         {(delivery.status === 'in_transit' || delivery.status === 'pending') && onConfirmDelivery ? (

@@ -1,13 +1,14 @@
-export type Delivery = {
+export interface Delivery {
   id: string;
-  customerName: string;
-  address: string;
-  restaurant: string;
   status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-  deadline: string;
-  photo?: string;
-  earnings: number;
-  deliveryTime?: string;
+  restaurant: string;
+  dish: string;
+  address: string;
+  customerName: string;
+  courier: string;
+  createdAt: string;
+  earnings: number; // <-- Adicione este campo
+  // ...outros campos necessários...
 };
 
 export type Order = {

@@ -1,10 +1,28 @@
+"use client";
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
-import { ArrowRight, ShoppingCart, CookingPot, Bike } from 'lucide-react';
+import { ArrowRight, ShoppingCart, CookingPot, Bike, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
+  const [vencedor, setVencedor] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const pilotos = ['João', 'Maria', 'Carlos', 'Ana']; // Altere conforme necessário
+
+  function simularCorrida() {
+    console.log('Simulando corrida...');
+    const sorteado = pilotos[Math.floor(Math.random() * pilotos.length)];
+    setVencedor(sorteado);
+    setShowModal(true);
+  }
+
+  function fecharModal() {
+    setShowModal(false);
+    setVencedor(null);
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="container mx-auto flex items-center justify-between p-4">
@@ -29,15 +47,41 @@ export default function LandingPage() {
         <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl">
           Conectamos você aos melhores restaurantes da cidade, com entregas rápidas e eficientes. A solução completa para clientes, restaurantes e entregadores.
         </p>
-        <div className="mt-8 flex gap-4">
-          <Button asChild size="lg">
-            <Link href="/dashboard">
-              Pedir Agora
-              <ShoppingCart className="ml-2" />
-            </Link>
-          </Button>
-        </div>
       </main>
+
+      {/* Modal Pop-up */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[350px] relative">
+            <button
+              onClick={fecharModal}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              aria-label="Fechar"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-red-600">Pedido iFood Simulado</h2>
+            <div className="mb-2">
+              <span className="font-semibold">Restaurante:</span> Pizza Express
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold">Prato:</span> Pizza Calabresa
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold">Entregador:</span> {vencedor}
+            </div>
+            <div className="mb-4">
+              <span className="font-semibold">Status:</span> Pedido a caminho!
+            </div>
+            <button
+              onClick={fecharModal}
+              className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="bg-secondary/50 py-16">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
