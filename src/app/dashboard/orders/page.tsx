@@ -12,53 +12,57 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
-// Chave de identificação no LocalStorage (Deve ser a mesma usada em /menu/page.tsx)
-const STORAGE_KEY = 'menu_items_motoca'; 
+// Chaves de Storage
+const MENU_STORAGE_KEY = 'menu_items_motoca'; 
+const ORDERS_STORAGE_KEY = 'merchant_orders_motoca'; 
 
-// --- FUNÇÕES DE LÓGICA E DADOS ---
 
-/**
- * Carrega itens do cardápio do localStorage.
- * @returns {MenuItem[]} Lista de itens do cardápio.
- */
+// --- FUNÇÕES DE LÓGICA E DADOS (Mantidas) ---
+
 const getMenuFromLocalStorage = () => {
     if (typeof window !== 'undefined') {
-        const storedItems = localStorage.getItem(STORAGE_KEY);
+        const storedItems = localStorage.getItem(MENU_STORAGE_KEY);
         if (storedItems) {
             return JSON.parse(storedItems) as MenuItem[];
         }
     }
-    // Retorna um item fallback se o localStorage estiver vazio ou indisponível
     return [{ id: 'fallback', name: 'Sanduíche Básico', description: 'Item de fallback', price: 15.00, category: 'Lanches', imageUrl: '' }];
 };
 
-/**
- * Gera um novo pedido simulado baseado nos itens do cardápio.
- * @param {MenuItem[]} menuItems - Lista de itens disponíveis.
- * @returns {MerchantOrder} O objeto de pedido simulado.
- */
+const getOrdersFromLocalStorage = (): MerchantOrder[] => {
+    if (typeof window !== 'undefined') {
+        const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
+        if (storedOrders) {
+            return JSON.parse(storedOrders) as MerchantOrder[];
+        }
+    }
+    return [];
+};
+
+const saveOrdersToLocalStorage = (orders: MerchantOrder[]) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+    }
+};
+
 const generateSimulatedOrder = (menuItems: MenuItem[]): MerchantOrder => {
-    // Garante que há pelo menos 1 item para o pedido
     if (menuItems.length === 0) {
         menuItems = getMenuFromLocalStorage();
     }
 
-    const numItems = Math.floor(Math.random() * 2) + 1; // 1 ou 2 itens
+    const numItems = Math.floor(Math.random() * 2) + 1; 
     let total = 0;
     let itemDetails: { name: string, price: number }[] = [];
     
-    // Seleciona itens aleatórios
     for (let i = 0; i < numItems; i++) {
         const item = menuItems[Math.floor(Math.random() * menuItems.length)];
         total += item.price;
         itemDetails.push({ name: item.name, price: item.price });
     }
     
-    // Adiciona taxa de serviço/entrega
     const deliveryFee = 5.00; 
     total += deliveryFee;
     
-    // Mock de Entregador
     const couriers = [
         { name: 'Lucas S.', rating: 4.8 }, 
         { name: 'Rafaela C.', rating: 4.5 }
@@ -68,11 +72,11 @@ const generateSimulatedOrder = (menuItems: MenuItem[]): MerchantOrder => {
     return {
         id: `PEDIDO-${Math.floor(Math.random() * 10000)}`,
         customerName: 'Cliente Simulado',
-        items: numItems, // Contador de itens
+        items: numItems, 
         total: total,
-        status: 'preparing', // Começa em preparo
+        status: 'preparing', 
         courier: courier,
-        itemDetails: itemDetails, // Usado para exibição detalhada, se necessário
+        itemDetails: itemDetails, 
     };
 };
 
@@ -94,19 +98,19 @@ const OrderRow = ({ order }: { order: MerchantOrder }) => {
             <TableCell>{order.customerName}</TableCell>
             <TableCell>
                  <Badge variant="outline" className={cn("gap-1.5", statusInfo.bgColor, statusInfo.color, 'border-none')}>
-                    <statusInfo.icon className="w-3 h-3" />
-                    {statusInfo.label}
-                </Badge>
+                     <statusInfo.icon className="w-3 h-3" />
+                     {statusInfo.label}
+                 </Badge>
             </TableCell>
              <TableCell className="text-center">{order.items}</TableCell>
             <TableCell className="font-medium text-right">{order.total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</TableCell>
             <TableCell>
                 {order.courier ? (
                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span>{order.courier.name}</span>
-                        <Badge variant="secondary" className="gap-1"><Star className="w-3 h-3 text-amber-500 fill-amber-500" />{order.courier.rating}</Badge>
-                    </div>
+                         <User className="w-4 h-4 text-muted-foreground" />
+                         <span>{order.courier.name}</span>
+                         <Badge variant="secondary" className="gap-1"><Star className="w-3 h-3 text-amber-500 fill-amber-500" />{order.courier.rating}</Badge>
+                     </div>
                 ) : (
                     <span className="text-muted-foreground text-xs italic">Aguardando...</span>
                 )}
@@ -129,151 +133,145 @@ const OrderRow = ({ order }: { order: MerchantOrder }) => {
     )
 }
 
-// Componente para o Modal de "Novo Pedido"
-const NovoPedidoModal = ({ order, onClose, onAccept }) => {
-  const [timeLeft, setTimeLeft] = useState(30); // 30 segundos para aceitar
+// CORREÇÃO AQUI: Definindo o componente NovoPedidoModal com tipos explícitos
+interface NovoPedidoModalProps {
+    order: MerchantOrder;
+    onClose: () => void;
+    onAccept: () => void;
+}
 
-  useEffect(() => {
-    // Previne o loop infinito usando a dependência estável
-    if (timeLeft <= 0) {
-      console.log('Tempo esgotado! Pedido perdido.');
-      onClose(); 
-      return;
-    }
+const NovoPedidoModal: React.FC<NovoPedidoModalProps> = ({ order, onClose, onAccept }) => {
+    const [timeLeft, setTimeLeft] = useState(30);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 1);
-    }, 1000);
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            onClose(); 
+            return;
+        }
 
-    return () => clearInterval(timer);
-  }, [timeLeft, onClose]);
+        const timer = setInterval(() => {
+            setTimeLeft((prevTime) => prevTime - 1);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeLeft, onClose]);
 
 
-  return (
-    // Fundo escuro do modal
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000]">
-      {/* Container principal do cartão do modal */}
-      <div 
-        className="bg-white rounded-xl shadow-2xl w-full max-w-sm border border-red-500 overflow-hidden"
-        style={{ borderColor: '#FF5050', maxWidth: '380px' }}
-      >
-        {/* Cabeçalho do Modal */}
-        <div className="flex justify-between items-center p-5 border-b border-gray-100">
-          <div className="flex items-center">
-            <span className="text-3xl mr-3" style={{ color: '#FF5050' }}>🔔</span>
-            <h3 className="m-0 text-xl font-bold" style={{ color: '#FF5050' }}>Novo Pedido!</h3>
-          </div>
-          <span className="text-2xl font-bold text-gray-800">
-            R$ {order.total.toFixed(2).replace('.', ',')}
-          </span>
-        </div>
+    return (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000]">
+            <div 
+                className="bg-white rounded-xl shadow-2xl w-full max-w-sm border border-red-500 overflow-hidden"
+                style={{ borderColor: '#FF5050', maxWidth: '380px' }}
+            >
+                <div className="flex justify-between items-center p-5 border-b border-gray-100">
+                    <div className="flex items-center">
+                        <span className="text-3xl mr-3" style={{ color: '#FF5050' }}>🔔</span>
+                        <h3 className="m-0 text-xl font-bold" style={{ color: '#FF5050' }}>Novo Pedido!</h3>
+                    </div>
+                    <span className="text-2xl font-bold text-gray-800">
+                        R$ {order.total.toFixed(2).replace('.', ',')}
+                    </span>
+                </div>
 
-        {/* Tempo para aceitar */}
-        <p className="text-sm text-gray-600 text-left px-5 mt-3">
-          Você tem <span className="font-semibold text-red-500">{timeLeft}</span> segundos para aceitar.
-        </p>
+                <p className="text-sm text-gray-600 text-left px-5 mt-3">
+                    Você tem <span className="font-semibold text-red-500">{timeLeft}</span> segundos para aceitar.
+                </p>
 
-        {/* Seções de Itens e Cliente */}
-        <div className="p-5 space-y-3">
-          {/* Cartão de Itens */}
-          <div className="bg-gray-50 rounded-lg p-4 flex items-center border border-gray-200">
-            <span className="mr-3 text-xl">🍔</span>
-            <div>
-              <p className="m-0 text-xs text-gray-500">Itens:</p>
-              <p className="m-0 font-bold text-base">{order.items} {order.items > 1 ? 'itens' : 'item'}</p>
+                <div className="p-5 space-y-3">
+                    <div className="bg-gray-50 rounded-lg p-4 flex items-center border border-gray-200">
+                        <span className="mr-3 text-xl">🍔</span>
+                        <div>
+                            <p className="m-0 text-xs text-gray-500">Itens:</p>
+                            <p className="m-0 font-bold text-base">{order.items} {order.items > 1 ? 'itens' : 'item'}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4 flex items-center border border-gray-200">
+                        <span className="mr-3 text-xl">👤</span>
+                        <div>
+                            <p className="m-0 text-xs text-gray-500">Cliente:</p>
+                            <p className="m-0 font-bold text-base">{order.customerName}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-between gap-3 p-5 pt-0">
+                    <Button 
+                        onClick={onClose} 
+                        variant="destructive"
+                        className="flex-1 h-12 text-base font-bold bg-red-600 hover:bg-red-700 rounded-lg"
+                    >
+                        <span className="mr-2">✕</span> Recusar
+                    </Button>
+                    <Button 
+                        onClick={onAccept} 
+                        className="flex-1 h-12 text-base font-bold bg-green-600 hover:bg-green-700 rounded-lg"
+                        style={{ backgroundColor: '#28a745' }}
+                    >
+                        <span className="mr-2">✓</span> Aceitar
+                    </Button>
+                </div>
             </div>
-          </div>
-
-          {/* Cartão de Cliente */}
-          <div className="bg-gray-50 rounded-lg p-4 flex items-center border border-gray-200">
-            <span className="mr-3 text-xl">👤</span>
-            <div>
-              <p className="m-0 text-xs text-gray-500">Cliente:</p>
-              <p className="m-0 font-bold text-base">{order.customerName}</p>
-            </div>
-          </div>
         </div>
-
-        {/* Botões de Ação */}
-        <div className="flex justify-between gap-3 p-5 pt-0">
-          <Button 
-            onClick={onClose} // Recusar fecha o modal
-            variant="destructive"
-            className="flex-1 h-12 text-base font-bold bg-red-600 hover:bg-red-700 rounded-lg"
-          >
-            <span className="mr-2">✕</span> Recusar
-          </Button>
-          <Button 
-            onClick={onAccept} // Aceitar chama a função que adiciona o pedido e fecha
-            className="flex-1 h-12 text-base font-bold bg-green-600 hover:bg-green-700 rounded-lg"
-            style={{ backgroundColor: '#28a745' }}
-          >
-            <span className="mr-2">✓</span> Aceitar
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 
-// --- COMPONENTE PRINCIPAL ---
+// --- COMPONENTE PRINCIPAL (EXPORT DEFAULT) ---
 
 export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOrder[] }) {
-    // 1. Estado para gerenciar todos os pedidos (incluindo os simulados)
-    const [liveOrders, setLiveOrders] = useState<MerchantOrder[]>(orders);
+    // 1. Estado para gerenciar todos os pedidos (INICIALIZA DO LOCALSTORAGE)
+    const [liveOrders, setLiveOrders] = useState<MerchantOrder[]>(getOrdersFromLocalStorage()); 
 
     // 2. Estado para controlar o modal e o pedido que está sendo oferecido
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [currentSimulatedOrder, setCurrentSimulatedOrder] = useState<MerchantOrder | null>(null);
 
-    // 3. Estado para carregar os itens do cardápio (ocorre apenas uma vez)
+    // 3. Estado para carregar os itens do cardápio
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
     useEffect(() => {
         setMenuItems(getMenuFromLocalStorage());
     }, []); 
     
+    // NOVO EFEITO: Salva pedidos no LocalStorage sempre que liveOrders mudar
+    useEffect(() => {
+        saveOrdersToLocalStorage(liveOrders);
+    }, [liveOrders]);
+
     // --- LÓGICAS DE FLUXO ---
 
-    // Função estável para fechar o modal
     const handleCloseModal = useCallback(() => {
         setShowOrderModal(false);
         setCurrentSimulatedOrder(null);
     }, []);
 
-    // Função estável para adicionar o pedido aceito e iniciar o ciclo de entrega
     const addSimulatedOrder = useCallback((newOrder: MerchantOrder) => {
-        // 1. Adiciona o pedido na lista como 'preparing'
         setLiveOrders(prevOrders => [...prevOrders, newOrder]);
         handleCloseModal();
 
-        // 2. Simula o tempo de preparo (3 segundos) -> READY
+        // 2. Simula o tempo de preparo (3s) -> READY
         setTimeout(() => {
-            console.log(`Pedido ${newOrder.id} está pronto.`);
             setLiveOrders(prevOrders => prevOrders.map(order => 
                 order.id === newOrder.id ? { ...order, status: 'ready' } : order
             ));
             
-            // 3. Simula a chegada do motoboy (2 segundos) -> OUT_FOR_DELIVERY
+            // 3. Simula a chegada do motoboy (2s) -> OUT_FOR_DELIVERY
             setTimeout(() => {
-                console.log(`Motoboy pegou o pedido ${newOrder.id}.`);
                 setLiveOrders(prevOrders => prevOrders.map(order => 
                     order.id === newOrder.id ? { ...order, status: 'out_for_delivery' } : order
                 ));
 
-                // 4. Simula a entrega (5 segundos) -> DELIVERED (CONCLUÍDO)
+                // 4. Simula a entrega (5s) -> DELIVERED (CONCLUÍDO)
                 setTimeout(() => {
-                    console.log(`Pedido ${newOrder.id} concluído.`);
                     setLiveOrders(prevOrders => prevOrders.map(order => 
                         order.id === newOrder.id ? { ...order, status: 'delivered' } : order
                     ));
-                }, 5000); // 5 segundos para a entrega final
-            }, 2000); // 2 segundos para o motoboy pegar
-        }, 3000); // 3 segundos de preparo
+                }, 5000); 
+            }, 2000); 
+        }, 3000); 
     }, [handleCloseModal]);
 
 
-    // Função que é chamada ao clicar no botão 'Simular Novo Pedido'
     const handleSimulateOrder = () => {
         const newOrder = generateSimulatedOrder(menuItems);
         setCurrentSimulatedOrder(newOrder);
@@ -306,12 +304,11 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
                     </h1>
                     <p className="text-muted-foreground mt-1">Gerencie e acompanhe todos os pedidos do seu restaurante.</p>
                 </div>
-                {/* Botão de Simulação */}
                 <Button 
                     onClick={handleSimulateOrder}
                     className="h-10 px-4 py-2 font-bold"
                     style={{ backgroundColor: '#FF5050', color: 'white' }}
-                    disabled={menuItems.length === 0} // Desabilita se não houver itens no cardápio
+                    disabled={menuItems.length === 0} 
                 >
                     Simular Novo Pedido 🛒
                 </Button>
@@ -348,7 +345,6 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {/* Ordena para que os mais novos (simulados) fiquem em cima */}
                                                 {filteredOrders.sort((a, b) => b.id.localeCompare(a.id)).map(order => (
                                                     <OrderRow key={order.id} order={order} />
                                                 ))}
