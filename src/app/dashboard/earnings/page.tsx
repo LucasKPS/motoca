@@ -1,45 +1,118 @@
-// src/app/earnings/page.tsx
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Truck, TrendingUp, Calendar } from "lucide-react";
+import { DollarSign, Truck, TrendingUp, Calendar, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useDeliveries } from "@/hooks/useDeliveries"; 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CourierRun, RunStatus } from '../runs/page'; // Importando a tipagem da tela de corridas
 
-import EarningsChart from "../_components/earnings/EarningsChart";
+// --- TIPOS E CHAVES ---
 
 type Period = 'today' | 'week' | 'month' | 'all';
+const RUNS_STORAGE_KEY = 'courier_runs_motoca'; 
+
+// Adicione um campo de deliveredAt no tipo para fins de cálculo e persistência.
+// Assumimos que a tela de runs atualizará isso, mas garantimos um fallback aqui.
+interface EarningsRun extends CourierRun {
+    deliveredAt: string;
+}
+
+// --- FUNÇÕES DE LÓGICA DE DADOS ---
+
+/**
+ * Carrega corridas do LocalStorage, filtra as concluídas e garante a presença de deliveredAt.
+ */
+const getDeliveredRuns = (): EarningsRun[] => {
+    if (typeof window === 'undefined') return [];
+
+    const storedRuns = localStorage.getItem(RUNS_STORAGE_KEY);
+    if (!storedRuns) return [];
+
+    try {
+        const runs: CourierRun[] = JSON.parse(storedRuns);
+        
+        return runs
+            .filter(run => run.status === 'delivered')
+            .map(run => ({
+                // Adiciona deliveredAt. Para dados antigos, assume-se que foi "hoje".
+                ...run,
+                deliveredAt: (run as any).deliveredAt || new Date().toISOString(), 
+            } as EarningsRun));
+
+    } catch (error) {
+        console.error("Erro ao processar corridas do localStorage:", error);
+        return [];
+    }
+};
+
+/**
+ * Filtra corridas concluídas com base no período selecionado.
+ */
+const filterRunsByPeriod = (runs: EarningsRun[], period: Period): EarningsRun[] => {
+    if (period === 'all') return runs;
+
+    const now = new Date();
+    let startDate = new Date();
+
+    if (period === 'today') {
+        startDate.setHours(0, 0, 0, 0);
+    } else if (period === 'week') {
+        // Pega o último domingo
+        startDate.setDate(now.getDate() - now.getDay()); 
+        startDate.setHours(0, 0, 0, 0);
+    } else if (period === 'month') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    return runs.filter(run => {
+        const runDate = new Date(run.deliveredAt);
+        return runDate >= startDate;
+    });
+};
+
+// --- COMPONENTE PLACEHOLDER (Gráfico) ---
+
+const EarningsChartPlaceholder: React.FC = () => (
+    <div className="flex flex-col items-center justify-center h-48 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4">
+        <TrendingUp className="w-8 h-8 text-primary mb-2" />
+        <p className="text-sm text-muted-foreground">Gráfico de desempenho (Placeholder)</p>
+    </div>
+);
+
+
+// --- COMPONENTE PRINCIPAL ---
 
 export default function EarningsPage() {
     const [period, setPeriod] = useState<Period>('week');
-    
-    // Obtém a função de filtro do hook
-    const { getFilteredDeliveries } = useDeliveries();
+    const [allDeliveredRuns, setAllDeliveredRuns] = useState<EarningsRun[]>([]);
 
-    // Cálculos otimizados que dependem do filtro
+    // Recarrega as corridas sempre que o LocalStorage muda
+    useEffect(() => {
+        const updateRuns = () => setAllDeliveredRuns(getDeliveredRuns());
+        
+        updateRuns();
+        window.addEventListener('storage', updateRuns);
+        return () => window.removeEventListener('storage', updateRuns);
+    }, []);
+
+    // Cálculos otimizados (useMemo)
     const { totalEarnings, totalDeliveries, averageEarning, bestEarning, recentDeliveries } = useMemo(() => {
         
-        const filteredDeliveries = getFilteredDeliveries(period);
+        const filteredRuns = filterRunsByPeriod(allDeliveredRuns, period);
 
-        const earningsStats = filteredDeliveries.reduce((acc, d) => {
-            acc.totalEarnings += d.earnings || 0;
-            return acc;
-        }, { totalEarnings: 0 });
-
-        const count = filteredDeliveries.length;
+        const totalEarnings = filteredRuns.reduce((sum, run) => sum + run.value, 0);
+        const count = filteredRuns.length;
         
-        const totalEarnings = earningsStats.totalEarnings;
         const averageEarning = count > 0 ? totalEarnings / count : 0;
 
         const bestEarning = count > 0 
-            ? Math.max(...filteredDeliveries.map(d => d.earnings || 0)) 
+            ? Math.max(...filteredRuns.map(r => r.value)) 
             : 0;
 
-        const recentDeliveries = filteredDeliveries
-            .sort((a, b) => 
-                Date.parse(b.deliveredAt || b.createdAt) - Date.parse(a.deliveredAt || a.createdAt)
-            )
+        const recentDeliveries = filteredRuns
+            // Ordena pelo mais recente (deliveredAt)
+            .sort((a, b) => new Date(b.deliveredAt).getTime() - new Date(a.deliveredAt).getTime())
             .slice(0, 5);
 
         return { 
@@ -49,7 +122,7 @@ export default function EarningsPage() {
             bestEarning, 
             recentDeliveries 
         };
-    }, [period, getFilteredDeliveries]);
+    }, [period, allDeliveredRuns]);
 
     const formatCurrency = (value: number) => 
         value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -58,7 +131,7 @@ export default function EarningsPage() {
     return (
         <div className="flex flex-col gap-8 p-6 container">
             {/* Título e Filtro de Período */}
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start flex-wrap gap-4">
                 <div>
                     <h1 className="text-3xl font-headline font-bold text-primary flex items-center gap-2">
                         <DollarSign className="w-6 h-6"/>
@@ -67,7 +140,7 @@ export default function EarningsPage() {
                     <p className="text-muted-foreground mt-1">Acompanhe seu desempenho e histórico financeiro.</p>
                 </div>
                 <Select value={period} onValueChange={(value) => setPeriod(value as Period)}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                         <SelectValue placeholder="Filtrar período" />
                     </SelectTrigger>
                     <SelectContent>
@@ -133,7 +206,8 @@ export default function EarningsPage() {
                         <CardTitle className="font-headline">Desempenho no Período</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <EarningsChart />
+                        {/* Substituindo EarningsChart pelo nosso Placeholder */}
+                        <EarningsChartPlaceholder />
                     </CardContent>
                 </Card>
                 
@@ -146,20 +220,20 @@ export default function EarningsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Detalhes</TableHead>
+                                    <TableHead>Local</TableHead>
                                     <TableHead className="text-right">Valor</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {recentDeliveries.length > 0 ? (
-                                    recentDeliveries.map((d: any) => (
+                                    recentDeliveries.map((d: EarningsRun) => (
                                         <TableRow key={d.id}>
                                             <TableCell>
-                                                <div className="font-medium">{d.customerName || 'Cliente Anônimo'}</div>
-                                                <div className="text-sm text-muted-foreground">{d.restaurant}</div>
+                                                <div className="font-medium">{d.pickupLocation}</div>
+                                                <div className="text-sm text-muted-foreground">{new Date(d.deliveredAt).toLocaleDateString('pt-BR')}</div>
                                             </TableCell>
                                             <TableCell className="text-right font-medium text-green-600">
-                                                {formatCurrency(d.earnings)}
+                                                {formatCurrency(d.value)}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -175,6 +249,15 @@ export default function EarningsPage() {
                     </CardContent>
                 </Card>
             </div>
+            {totalDeliveries === 0 && (
+                <Alert className="border-l-4 border-l-red-500 mt-4">
+                    <MapPin className="h-4 w-4 text-red-500" />
+                    <AlertTitle>Sem Dados de Ganhos</AlertTitle>
+                    <AlertDescription>
+                        Para ver seus ganhos aqui, aceite e **finalize manualmente** corridas na aba **Minhas Corridas**.
+                    </AlertDescription>
+                </Alert>
+            )}
         </div>
     );
 }
