@@ -1,39 +1,27 @@
-// next.config.js - VERSÃO FINAL CORRIGIDA
-import type {NextConfig} from 'next';
+// next.config.js
 
-const nextConfig: NextConfig = {
-  // ... outras configurações (typescript, eslint)
-  images: {
-    // CORREÇÃO: Mover 'dangerouslyAllowSVG' para o nível superior 'images'
-    dangerouslyAllowSVG: true, 
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    // ... outras configurações que você possa ter
     
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      { 
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
+    images: {
+        dangerouslyAllowSVG: true,
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'images.tcdn.com.br', // <-- ESSE É O DOMÍNIO QUE RESOLVE SEU ERRO
+                port: '',
+                pathname: '/**', 
+            },
+            {
+                protocol: 'https',
+                hostname: 'placehold.co',
+                port: '',
+                pathname: '/**', 
+            },
+            // ... Mantenha os outros domínios de placeholder aqui (unsplash, picsum, etc.)
+        ],
+    },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
