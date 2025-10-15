@@ -3,9 +3,9 @@ import React from 'react';
 
 export default function MerchantHome({ name = "Restaurante" }: { name?: string }) {
 
-    return (
-        <div style={{ padding: '20px', fontSize: '24px', fontWeight: 'bold' }}>
-            STATUS: ESTÁVEL. PROJETO OPERACIONAL.
-        </div>
-    );
+    return (
+        <div className="p-5 text-2xl font-bold text-center text-muted-foreground">
+            Tela Inicial - Rota Expressa
+        </div>
+    );
 }

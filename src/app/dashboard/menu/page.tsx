@@ -1,32 +1,55 @@
 // src/app/dashboard/menu/page.tsx
 'use client'; 
 
-import { useState } from 'react';
-// Importação corrigida: usa o caminho relativo './'
+import { useState, useEffect } from 'react'; // Importamos 'useEffect'
 import MenuPageUI from './menu-page-ui'; 
-import type { MenuItem } from "@/lib/types"; // Mantenha sua importação de tipos
+import type { MenuItem } from "@/lib/types"; 
 
-// DADOS INICIAIS (Simulação de itens já existentes)
-const initialMenuItems: MenuItem[] = [
-    { id: '1', name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão.', price: 45.00, category: 'Pizzas Salgadas', imageUrl: 'https://placehold.co/600x400/22d3ee/FFFFFF?text=Item+Inicial' },
-    { id: '2', name: 'Lasanha de Bolonhesa', description: 'Receita tradicional italiana.', price: 32.50, category: 'Massas', imageUrl: '' },
+// 1. Chave de identificação no LocalStorage
+const STORAGE_KEY = 'menu_items_motoca';
+
+// Itens Padrão (Fallback)
+const FALLBACK_ITEMS: MenuItem[] = [
+    { id: '1', name: 'Sanduíche Básico', description: 'Pão, queijo e presunto', price: 15.00, category: 'Lanches', imageUrl: '' },
 ];
 
 export default function MenuParentPage() {
-    // ESTADO: Armazena a lista atual de itens do menu
-    const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
+    // 2. Inicialização do Estado (Carregamento do localStorage)
+    const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
+        // Verifica se está rodando no navegador antes de tentar acessar 'window'
+        if (typeof window !== 'undefined') { 
+            const storedItems = localStorage.getItem(STORAGE_KEY);
+            if (storedItems) {
+                // Se houver dados salvos, retorna eles
+                return JSON.parse(storedItems) as MenuItem[];
+            }
+        }
+        // Se não houver dados ou não estiver no navegador, retorna os padrões
+        return FALLBACK_ITEMS; 
+    });
 
-    // FUNÇÃO PARA SALVAR/EDITAR UM ITEM
+
+    // 3. Efeito Lateral (Persistência/Salvamento)
+    // Roda toda vez que o array 'menuItems' é atualizado (depois de salvar, editar ou deletar)
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // Salva a lista atual no localStorage
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(menuItems));
+        }
+    }, [menuItems]); // Dependência: A função roda quando 'menuItems' muda
+
+
+    // FUNÇÃO PARA SALVAR/EDITAR UM ITEM (Chamada pelo Modal)
     const handleSaveItem = (newItem: MenuItem) => {
-        // Se o item já tem ID, é EDIÇÃO
         if (newItem.id) {
+            // Edição: Mapeia e substitui o item
             setMenuItems(prevItems =>
                 prevItems.map(item => 
                     (item.id === newItem.id ? newItem : item)
                 )
             );
         } else {
-            // Se for CRIAÇÃO, adiciona um ID e insere no array
+            // Criação: Adiciona novo ID e insere
             const itemWithId = { ...newItem, id: Date.now().toString() }; 
             setMenuItems(prevItems => [...prevItems, itemWithId]);
         }
@@ -39,9 +62,9 @@ export default function MenuParentPage() {
 
     return (
         <MenuPageUI
-            menuItems={menuItems}          // Passa a lista atualizada
-            onSaveItem={handleSaveItem}    // Passa a função de salvar
-            onDeleteItem={handleDeleteItem} // Passa a função de exclusão
+            menuItems={menuItems}
+            onSaveItem={handleSaveItem}
+            onDeleteItem={handleDeleteItem}
         />
     );
 }
