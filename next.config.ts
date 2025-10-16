@@ -2,26 +2,32 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // ... Aqui você pode ter outras configurações de typescript, eslint, etc.
-    
+    // Configurações para garantir que imagens externas sejam carregadas corretamente
     images: {
         dangerouslyAllowSVG: true,
         remotePatterns: [
-            // 1. Domínio da imagem de teste (Whisky Jameson)
-            {
-                protocol: 'https',
-                hostname: 'images.tcdn.com.br',
-                port: '',
-                pathname: '/**', 
-            },
-            // 2. Domínio do erro mais recente (Unsplash)
+            // 1. Domínio principal para Imagens de Capa (Unsplash)
             {
                 protocol: 'https',
                 hostname: 'images.unsplash.com', 
                 port: '',
                 pathname: '/**', 
             },
-            // 3. Domínios de Placeholders e Testes
+            // 2. Domínio dos Logos de Restaurante (Clearbit)
+            {
+                protocol: 'https',
+                hostname: 'logo.clearbit.com', 
+                port: '',
+                pathname: '/**', 
+            },
+            // 3. Domínio para Placeholders e Testes (TCDN)
+            {
+                protocol: 'https',
+                hostname: 'images.tcdn.com.br',
+                port: '',
+                pathname: '/**', 
+            },
+            // 4. Domínios de Placeholders Genéricos
             {
                 protocol: 'https',
                 hostname: 'placehold.co',
@@ -34,7 +40,6 @@ const nextConfig = {
                 port: '',
                 pathname: '/**', 
             },
-            // Adicione qualquer outro domínio que você precisar usar aqui
         ],
     },
 };
