@@ -1,4 +1,5 @@
 'use client'
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,23 +7,21 @@ import { ArrowRight, Utensils, Search, Star, SlidersHorizontal, MapPin, Clock } 
 import Image from "next/image";
 import Link from "next/link";
 
-const restaurants = [
-    // PIZZARIA DELÍCIA (URLs REVISADAS)
-    { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'https://images.unsplash.com/photo-1621332768593-0104e17e8878?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTMzNTR8MHwxfGFsbHwxfHx8fHx8fHwxNzAzNDQzNzc0fA&ixlib=rb-4.0.3&q=80&w=1080', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
-    // BURGER QUEEN (URLs REVISADAS)
-    { id: 'burger-queen', name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'https://images.unsplash.com/photo-1621332768593-0104e17e8878?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTMzNTQ1fDB8MXxjb2xsZWN0aW9uLXRodW1ifDEzMjY2MTJ8MjE0NjU1Nnw4NDA0MTI0NjUz?ixlib=rb-4.0.3&q=80&w=1080', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop', href: '/dashboard/order' },
-    // SUSHI HOUSE (URLs REVISADAS)
-    { id: 'sushi-house', name: 'Sushi House', rating: 4.9, category: 'Japonesa', deliveryTime: '35-45 min', logo: 'https://images.unsplash.com/photo-1621332768593-0104e17e8878?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTMzNTQ1fDB8MXxjb2xsZWN0aW9uLXRodW1ifDE0Njc1NTM2fDI1NjYxMXw4NDA0MTI0NjUz?ixlib=rb-4.0.3&q=80&w=1080', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
-    // CANTINA ITALIANA (URLs REVISADAS)
-    { id: 'cantina-italiana', name: 'Cantina Italiana', rating: 4.7, category: 'Italiana', deliveryTime: '30-40 min', logo: 'https://images.unsplash.com/photo-1621332768593-0104e17e8878?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTMzNTQ1fDB8MXxjb2xsZWN0aW9uLXRodW1ifDQ1NzQ5MTB8MjE0NjU1Nnw4NDA0MTI0NjUz?ixlib=rb-4.0.3&q=80&w=1080', image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
-    // FRANGO ASSADO EXPRESS (URLs REVISADAS)
-    { id: 'frango-assado', name: 'Frango Assado Express', rating: 4.6, category: 'Brasileira', deliveryTime: '40-50 min', logo: 'https://images.unsplash.com/photo-1621332768593-0104e17e8878?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTMzNTQ1fDB8MXxjb2xsZWN0aW9uLXRodW1ifDg0NTM2NDZ8MjE0NjU1Nnw4NDA0MTI0NjUz?ixlib=rb-4.0.3&q=80&w=1080', image: 'https://images.unsplash.com/photo-1598515213692-5f2841f45b64?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
-    // AÇAÍ POWER (URLs REVISADAS)
-    { id: 'acai-power', name: 'Açaí Power', rating: 4.9, category: 'Açaí', deliveryTime: '15-25 min', logo: 'https://images.unsplash.com/photo-1621332768593-0104e17e8878?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NTMzNTQ1fDB8MXxjb2xsZWN0aW9uLXRodW1ifDI0OTAzNjYzfDIxNDY1NTZ8ODQwNDEyNDY1Mw?ixlib=rb-4.0.3&q=80&w=1080', image: 'https://images.unsplash.com/photo-1619597548318-65c320152553?q=80&w=1974&auto=format&fit=crop', href: '/dashboard/order' },
+const RESTAURANTS_DATA = [
+    // PIZZARIA DELÍCIA
+    { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'https://logo.clearbit.com/pizzahut.com', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
+    // BURGER QUEEN
+    { id: 'burger-queen', name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'https://logo.clearbit.com/burgerking.com', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop', href: '/dashboard/order' },
 ]
 
 export default function RestaurantsPage() {
-    // ... (Restante do código HTML/JSX mantido da Versão 3.0 anterior)
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredRestaurants = RESTAURANTS_DATA.filter(r => 
+        r.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        r.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="flex flex-col gap-10 p-4 container max-w-7xl mx-auto">
             
@@ -42,7 +41,9 @@ export default function RestaurantsPage() {
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Input 
-                        placeholder="Buscar por nome do restaurante..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Buscar por nome do restaurante ou categoria..." 
                         className="pl-12 h-14 text-base rounded-xl border-2 shadow-sm focus:border-primary transition-colors" 
                     />
                 </div>
@@ -66,18 +67,21 @@ export default function RestaurantsPage() {
             <hr className='border-gray-100' />
 
             {/* Lista de Restaurantes em Grid */}
+            {filteredRestaurants.length === 0 ? (
+                <p className="text-center text-xl text-gray-500 py-10">Nenhum restaurante encontrado com o termo "{searchTerm}".</p>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {restaurants.map(r => (
+                {filteredRestaurants.map(r => (
                     <Link key={r.id} href={`${r.href}?id=${r.id}&role=client`} className="group block h-full">
-                        <Card className="overflow-hidden h-full flex flex-col rounded-xl shadow-md hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 ease-in-out border border-gray-100 hover:border-primary/50">
+                        <Card className="overflow-visible h-full flex flex-col rounded-xl shadow-md hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 ease-in-out border border-gray-100 hover:border-primary/50">
                             
-                            {/* Imagem de Capa e Tags */}
-                            <div className="relative h-40 w-full"> 
+                            {/* Imagem de Capa e Logo (Área Crítica) */}
+                            <div className="relative h-40 w-full mb-8"> {/* Adicionamos mb-8 para criar espaço no fluxo */}
                                 <Image 
                                     src={r.image}
                                     alt={r.name}
                                     fill
-                                    className="object-cover transition-transform group-hover:scale-105"
+                                    className="object-cover rounded-t-xl transition-transform group-hover:scale-105"
                                 />
 
                                 {/* Tag de Tempo de Entrega */}
@@ -86,18 +90,20 @@ export default function RestaurantsPage() {
                                     {r.deliveryTime}
                                 </div>
 
-                                {/* Logo do Restaurante (Posicionamento mais discreto) */}
-                                <Image 
-                                    src={r.logo}
-                                    alt={`${r.name} Logo`}
-                                    width={56}
-                                    height={56}
-                                    className="absolute bottom-[-28px] left-4 rounded-xl border-2 border-white shadow-lg object-contain bg-white p-1"
-                                />
+                                {/* Logo do Restaurante: Posicionado 50% para baixo da imagem e 50% para cima do conteúdo */}
+                                <div className="absolute bottom-0 left-4 translate-y-1/2 rounded-xl border-2 border-white shadow-lg bg-white p-1">
+                                    <Image 
+                                        src={r.logo}
+                                        alt={`${r.name} Logo`}
+                                        width={56}
+                                        height={56}
+                                        className="object-contain"
+                                    />
+                                </div>
                             </div>
                             
-                            {/* Conteúdo do Card */}
-                            <CardContent className="p-4 pt-10 flex-1 flex flex-col">
+                            {/* Conteúdo do Card - Sem padding-top, pois o mb-8 já empurrou tudo */}
+                            <CardContent className="p-4 pt-0 flex-1 flex flex-col">
                                 
                                 <h3 className="font-extrabold text-xl text-gray-900 truncate mb-2">
                                     {r.name}
@@ -131,6 +137,7 @@ export default function RestaurantsPage() {
                     </Link>
                 ))}
             </div>
+            )}
         </div>
     );
 }

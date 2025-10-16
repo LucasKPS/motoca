@@ -1,10 +1,9 @@
-// next.config.js
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // Configurações para garantir que imagens externas sejam carregadas corretamente
     images: {
         dangerouslyAllowSVG: true,
+        // Configuração de padrões de domínios remotos
         remotePatterns: [
             // 1. Domínio principal para Imagens de Capa (Unsplash)
             {
@@ -13,21 +12,28 @@ const nextConfig = {
                 port: '',
                 pathname: '/**', 
             },
-            // 2. Domínio dos Logos de Restaurante (Clearbit)
+            // 2. Domínio principal para Logos de Restaurante (Clearbit)
             {
                 protocol: 'https',
                 hostname: 'logo.clearbit.com', 
                 port: '',
                 pathname: '/**', 
             },
-            // 3. Domínio para Placeholders e Testes (TCDN)
+            // 3. Domínio de Logo Alternativo (Adicionado para o Sushi House)
+            {
+                protocol: 'https',
+                hostname: 'api.logoduck.com',
+                port: '',
+                pathname: '/**', 
+            },
+            // 4. Domínio para Placeholders e Testes (TCDN)
             {
                 protocol: 'https',
                 hostname: 'images.tcdn.com.br',
                 port: '',
                 pathname: '/**', 
             },
-            // 4. Domínios de Placeholders Genéricos
+            // 5. Domínios de Placeholders Genéricos
             {
                 protocol: 'https',
                 hostname: 'placehold.co',
