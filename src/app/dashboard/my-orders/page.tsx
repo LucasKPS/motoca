@@ -1,110 +1,216 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-// Importação corrigida: Clock já estava no seu código, garantindo que ele seja usado.
 import { ListOrdered, Package, CheckCircle, XCircle, Star, Clock } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
-import type { Order } from "@/lib/types"; 
 
-// 1. Atualização do statusMap: Adicionando o status 'pending' (Ativo)
-const statusMap: Record<string, { label: string; icon: React.ElementType, color: string }> = {
-  // NOVO STATUS: Usado para pedidos recém-finalizados (ativo/em preparação)
-  pending: { label: 'Em Preparação', icon: Clock, color: 'text-orange-600' }, 
-  
-  in_transit: { label: 'A caminho', icon: Package, color: 'text-blue-600' },
-  delivered: { label: 'Entregue', icon: CheckCircle, color: 'text-green-600' },
-  cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-red-600' },
+// --- Definições de Tipos ---
+
+type StatusKey = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+
+interface Order {
+    id: string;
+    restaurant: string;
+    date: string; 
+    total: number;
+    status: StatusKey;
+    rating: number; 
+    // Campo usado para rastrear o tempo de criação do pedido (cooldown)
+    createdAt: number; 
+}
+
+interface StatusInfo {
+    label: string;
+    icon: React.ElementType;
+    color: string;
+}
+
+// --- Mapeamento de Status ---
+
+const statusMap: Record<StatusKey, StatusInfo> = {
+  pending: { label: 'Em Preparação', icon: Clock, color: 'text-orange-600' }, 
+  in_transit: { label: 'A caminho', icon: Package, color: 'text-blue-600' },
+  delivered: { label: 'Entregue', icon: CheckCircle, color: 'text-green-600' },
+  cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-red-600' },
 };
 
+// CHAVE FIXA PARA SIMULAÇÃO NO LOCAL STORAGE
+const ORDERS_STORAGE_KEY = 'academic_orders';
 
-// SIMULAÇÃO: Esta lista é apenas um *fallback* caso a prop 'orders' não seja passada.
-// Você deve remover ou modificar este array 'defaultOrders' quando integrar com o Estado Global/Firebase.
-const defaultOrders: Order[] = [
-    {
-        id: '123456',
-        restaurant: 'Pizzaria Central',
-        date: new Date().toLocaleDateString('pt-BR'),
-        total: 78.99,
-        status: 'pending', // Este pedido aparecerá como "Em Preparação" (Ativo)
-        rating: 0,
-    },
-    {
-        id: '123455',
-        restaurant: 'Hamburgueria do Zé',
-        date: '01/09/2024',
-        total: 45.50,
-        status: 'delivered',
-        rating: 5,
-    },
-];
+// Cooldown de 10 segundos (10000 ms)
+const COOLDOWN_MS = 10000;
 
 
-export default function MyOrdersPage({ orders = defaultOrders }: { orders: Order[] }) {
-  // ATENÇÃO: Se você usa um gerenciador de estado (Redux, Context, Zustand)
-  // você deve **substituir** `orders = defaultOrders` pela leitura do seu estado.
-  // Exemplo (se fosse React Redux): const orders = useSelector(state => state.pedidos.lista);
-  
-  return (
-    <div className="flex flex-col gap-8 p-4 container">
-      <h1 className="text-3xl font-headline font-bold text-primary flex items-center gap-2">
-        <ListOrdered />
-        Meus Pedidos
-      </h1>
+// --- Componente Principal ---
 
-      <div className="flex flex-col gap-4">
-        {orders.map(order => {
-          // O fallback para statusInfo é importante caso o status não exista no mapa
-          // Usamos 'in_transit' como fallback visual se a chave for inválida.
-          const statusInfo = statusMap[order.status] || statusMap.in_transit;
-          const StatusIcon = statusInfo.icon;
-          
-          return (
-            <Card key={order.id}>
-              <CardHeader className="flex flex-row justify-between items-start">
-                <div>
-                  <CardTitle className="font-headline">{order.restaurant}</CardTitle>
-                  <CardDescription>{order.date} • {order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
-                </div>
-                <div className={`flex items-center gap-2 font-semibold ${statusInfo.color}`}>
-                  <StatusIcon className="w-5 h-5" />
-                  <span>{statusInfo.label}</span>
-                </div>
-              </CardHeader>
-              
-              {/* Lógica para o novo status 'pending' (Pedido Ativo) */}
-              {order.status === 'pending' && (
-                  <CardContent className="flex justify-end items-center pt-4 border-t mt-4">
-                      <Button variant="outline" size="sm">Acompanhar Preparação</Button>
-                  </CardContent>
-              )}
-              
-              {order.status === 'delivered' && (
-                <CardContent className="flex justify-between items-center pt-4 border-t mt-4">
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground mr-2">Sua avaliação:</span>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`w-5 h-5 ${i < (order.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/50'}`} />
-                    ))}
-                  </div>
-                  <Button variant="outline" size="sm">Pedir Novamente</Button>
-                </CardContent>
-              )}
-              
-              {order.status === 'in_transit' && (
-                <CardContent className="flex justify-end items-center pt-4 border-t mt-4">
-                  <Button variant="outline" size="sm">Acompanhar Pedido</Button>
-                </CardContent>
-              )}
-              
-              {order.status === 'cancelled' && (
-                <CardContent className="flex justify-end items-center pt-4 border-t mt-4">
-                  <Button variant="secondary" size="sm">Ver Detalhes</Button>
-                </CardContent>
-              )}
-            </Card>
-          )
-        })}
-      </div>
-    </div>
-  );
+export default function MyOrdersPage() {
+    // 🛑 ESTADO LOCAL: Carregar pedidos do LocalStorage
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Função para carregar dados do localStorage
+    const loadOrders = () => {
+        try {
+            const ordersString = localStorage.getItem(ORDERS_STORAGE_KEY);
+            // Certifique-se de que o objeto é um array antes de setar
+            const loadedOrders: Order[] = ordersString ? JSON.parse(ordersString) : [];
+            // Ordena do mais novo para o mais velho
+            loadedOrders.sort((a, b) => b.createdAt - a.createdAt);
+            setOrders(loadedOrders);
+        } catch (e) {
+            console.error("Erro ao carregar pedidos do LocalStorage:", e);
+            setOrders([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Função para atualizar o status no LocalStorage
+    const updateOrderStatusInStorage = (orderId: string, newStatus: StatusKey) => {
+        try {
+            const existingOrdersString = localStorage.getItem(ORDERS_STORAGE_KEY);
+            const existingOrders: Order[] = existingOrdersString ? JSON.parse(existingOrdersString) : [];
+            
+            const updatedOrders = existingOrders.map(order => 
+                order.id === orderId ? { ...order, status: newStatus } : order
+            );
+
+            localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
+            
+            // Atualiza o estado local para refletir a mudança imediatamente
+            setOrders(updatedOrders); 
+            
+        } catch (e) {
+            console.error("Erro ao atualizar status no LocalStorage:", e);
+        }
+    };
+    
+    // Efeito para carregar os pedidos na montagem e escutar mudanças de outras abas/páginas
+    useEffect(() => {
+        loadOrders();
+
+        // 🛑 Gatilho para "tempo real" (Escuta o evento de armazenamento para atualização)
+        window.addEventListener('storage', loadOrders);
+
+        return () => {
+            // Limpa o listener ao desmontar o componente
+            window.removeEventListener('storage', loadOrders);
+        };
+    }, []);
+
+    // 🛑 Efeito para Cooldown de Status
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const now = Date.now();
+            let hasUpdated = false;
+
+            // Filtra e verifica apenas os pedidos pendentes
+            orders.forEach(order => {
+                if (order.status === 'pending' && order.createdAt) {
+                    // Verifica se o tempo decorrido é maior ou igual ao cooldown (10 segundos)
+                    if (now - order.createdAt >= COOLDOWN_MS) {
+                        console.log(`Pedido ${order.id} movido de pending para delivered após cooldown.`);
+                        updateOrderStatusInStorage(order.id, 'delivered');
+                        hasUpdated = true;
+                    }
+                }
+            });
+
+            // Se houve atualização, o useEffect será reexecutado e um novo timer criado
+            
+        }, 1000); // Verifica a cada 1 segundo
+
+        return () => clearInterval(timer);
+        
+    }, [orders]); // Depende do array orders para rodar a cada mudança
+
+    // Fim da lógica de cooldown
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <p className="text-xl text-primary">Carregando pedidos...</p>
+            </div>
+        );
+        }
+
+    return (
+        <div className="flex flex-col gap-8 p-4 container max-w-4xl mx-auto">
+            <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2 border-b pb-4">
+                <ListOrdered className="w-8 h-8 text-primary"/>
+                Meus Pedidos
+            </h1>
+
+            <div className="flex flex-col gap-6">
+                {orders.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                        Nenhum pedido encontrado. Finalize um pedido na página de restaurantes!
+                    </div>
+                ) : (
+                    orders.map(order => {
+                        const statusInfo = statusMap[order.status] || statusMap.in_transit;
+                        const StatusIcon = statusInfo.icon;
+                        
+                        return (
+                            <Card key={order.id} className="shadow-lg border-gray-100 transition-shadow hover:shadow-xl">
+                                <CardHeader className="flex flex-row justify-between items-start pb-3">
+                                    <div className='flex flex-col'>
+                                        <CardTitle className="font-bold text-lg text-gray-800">{order.restaurant}</CardTitle>
+                                        <CardDescription className="text-sm text-gray-500 mt-1">
+                                            Pedido #{order.id} • {order.date}
+                                        </CardDescription>
+                                    </div>
+                                    <div className="text-right flex flex-col items-end">
+                                        <span className={`flex items-center gap-1 text-sm font-semibold ${statusInfo.color}`}>
+                                            <StatusIcon className="w-4 h-4" />
+                                            {statusInfo.label}
+                                        </span>
+                                        <p className="text-xl font-extrabold text-gray-900 mt-1">
+                                            {order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </p>
+                                    </div>
+                                </CardHeader>
+                                
+                                <CardContent className="pt-4 border-t border-gray-100 mt-2">
+                                    
+                                    {/* Botões de Ação Dinâmicos */}
+                                    <div className="flex justify-end items-center w-full">
+                                        
+                                        {/* Pendente / Em Preparação */}
+                                        {order.status === 'pending' && (
+                                            <Button variant="default" size="sm">Acompanhar Preparação</Button>
+                                        )}
+                                        
+                                        {/* A Caminho */}
+                                        {order.status === 'in_transit' && (
+                                            <Button variant="default" size="sm">Acompanhar Pedido</Button>
+                                        )}
+                                        
+                                        {/* Entregue (Avaliação) */}
+                                        {order.status === 'delivered' && (
+                                            <div className="flex justify-between items-center w-full">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-muted-foreground mr-2 text-sm">Sua avaliação:</span>
+                                                    {Array.from({ length: 5 }).map((_, i) => (
+                                                        <Star key={i} className={`w-4 h-4 ${i < (order.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+                                                    ))}
+                                                </div>
+                                                <Button variant="outline" size="sm">Pedir Novamente</Button>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Cancelado */}
+                                        {order.status === 'cancelled' && (
+                                            <Button variant="secondary" size="sm">Ver Detalhes</Button>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )
+                    })
+                )}
+            </div>
+        </div>
+    );
 }
