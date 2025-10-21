@@ -8,8 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 const restaurants = [
-    { name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
-    { name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'burgerking' },
+    { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
+    { id: 'burger-queen', name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'burgerking' },
 ]
 
 export default function ClientHome({ name }: { name?: string }) {
@@ -68,11 +68,14 @@ export default function ClientHome({ name }: { name?: string }) {
       <div>
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold font-headline">Restaurantes Populares</h3>
-            <Button variant="link" className="text-primary pr-0">Ver todos</Button>
+            <Link href="/dashboard/restaurants">
+              <Button variant="link" className="text-primary pr-0">Ver todos</Button>
+            </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {restaurants.map(r => (
-                <Card key={r.name} className="flex items-center gap-4 p-4 hover:shadow-lg transition-shadow cursor-pointer">
+              <Link href={`/dashboard/order?id=${r.id}&role=client`} key={r.id}>
+                <Card className="flex items-center gap-4 p-4 hover:shadow-lg transition-shadow cursor-pointer">
                      <img src={`https://logo.clearbit.com/${r.logo.toLowerCase().replace(/\s/g, '')}.com`} alt={r.name} className="h-12 w-12 object-contain rounded-md border p-1" />
                     <div className="flex-1">
                         <h4 className="font-semibold">{r.name}</h4>
@@ -82,6 +85,7 @@ export default function ClientHome({ name }: { name?: string }) {
                     </div>
                      <ArrowRight className="text-muted-foreground" />
                 </Card>
+              </Link>
             ))}
         </div>
       </div>
