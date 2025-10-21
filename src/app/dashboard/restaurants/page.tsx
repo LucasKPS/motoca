@@ -22,17 +22,25 @@ const RESTAURANTS_DATA = [
     { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'https://logo.clearbit.com/pizzahut.com', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
     // BURGER QUEEN
     { id: 'burger-queen', name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'https://logo.clearbit.com/burgerking.com', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop', href: '/dashboard/order' },
-    // SUSHI MASTER
-    { id: 'sushi-master', name: 'Sushi Master', rating: 4.9, category: 'Japonês', deliveryTime: '30-45 min', logo: 'https://logo.clearbit.com/sushijin.com', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
-    // PASTA LA VISTA
-    { id: 'pasta-la-vista', name: 'Pasta La Vista', rating: 4.3, category: 'Italiano', deliveryTime: '35-50 min', logo: 'https://logo.clearbit.com/olivegarden.com', image: 'https://images.unsplash.com/photo-1621996346565-e326b20f545c?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
 
 ]
+
+const CATEGORIES = [...new Set(RESTAURANTS_DATA.map(r => r.category))];
 
 export default function RestaurantsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [ratingFilter, setRatingFilter] = useState(0);
     const [tempRating, setTempRating] = useState(ratingFilter);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+    const handleCategoryToggle = (category: string) => {
+        setSelectedCategories(prev => 
+            prev.includes(category) 
+                ? prev.filter(c => c !== category)
+                : [...prev, category]
+        );
+    };
+
 
     const handleApplyFilters = () => {
         setRatingFilter(tempRating);
@@ -41,7 +49,8 @@ export default function RestaurantsPage() {
     const filteredRestaurants = RESTAURANTS_DATA.filter(r =>
         (r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
          r.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        r.rating >= ratingFilter
+        r.rating >= ratingFilter &&
+        (selectedCategories.length === 0 || selectedCategories.includes(r.category))
     );
 
     return (
@@ -118,6 +127,23 @@ export default function RestaurantsPage() {
                     <MapPin className="mr-2 h-5 w-5" />
                     Ver no Mapa
                 </Button>
+            </div>
+
+            {/* Filtro de Categorias */}
+            <div className="flex flex-col gap-3">
+                 <h3 className="text-xl font-bold text-gray-800">Categorias</h3>
+                 <div className="flex flex-wrap gap-3">
+                     {CATEGORIES.map(category => (
+                         <Button 
+                            key={category}
+                            variant={selectedCategories.includes(category) ? "default" : "outline"}
+                            onClick={() => handleCategoryToggle(category)}
+                            className="rounded-full px-5 py-2 text-sm font-semibold border-2 transition-all duration-200"
+                         >
+                            {category}
+                         </Button>
+                     ))}
+                 </div>
             </div>
 
             <hr className='border-gray-100' />
