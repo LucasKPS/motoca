@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, X, Utensils, CheckCircle, Package, ArrowLeft } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Plus, Minus, X, Utensils, CheckCircle, Package, ArrowLeft, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -28,8 +29,8 @@ interface Order {
     status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
     items: { id: number, name: string, price: number, quantity: number }[];
     rating: number;
-    // Adicionado para o cooldown de 10 segundos na página MyOrders
     createdAt: number; 
+    deliveryAddress: string; // Endereço de entrega
 }
 
 // Dados de Simulação
@@ -54,10 +55,10 @@ export default function OrderPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     
-    // Simula a obtenção do nome do restaurante a partir dos parâmetros de busca
     const restaurantName = searchParams.get('name') || RESTAURANT_DETAILS.name;
 
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [deliveryAddress, setDeliveryAddress] = useState(''); // Estado para o endereço
     const [isSendingOrder, setIsSendingOrder] = useState(false);
     const [orderSent, setOrderSent] = useState(false);
     const [error, setError] = useState('');
@@ -80,7 +81,7 @@ export default function OrderPage() {
             }
             return [...prevCart, { ...item, quantity: 1 }];
         });
-        setError(''); // Limpa erro ao adicionar item
+        setError(''); 
     };
 
     const updateQuantity = (itemId: number, change: number) => {
@@ -97,7 +98,7 @@ export default function OrderPage() {
     };
 
 
-    // --- Função de Finalizar Pedido (LocalStorage) ---
+    // --- Função de Finalizar Pedido ---
 
     const handlePlaceOrder = () => {
         if (cart.length === 0) {
@@ -105,17 +106,22 @@ export default function OrderPage() {
             return;
         }
 
+        // Validação do endereço
+        if (!deliveryAddress.trim()) {
+            setError('Por favor, informe o endereço de entrega.');
+            return;
+        }
+
         setIsSendingOrder(true);
         setError('');
 
-        // Gerar um ID de pedido curto (simulação)
         const orderId = Date.now().toString().slice(-6);
 
         const newOrder: Order = {
             id: orderId,
             restaurant: restaurantName,
             total: parseFloat(total.toFixed(2)),
-            status: 'pending', // Status inicial: Em Preparação
+            status: 'pending',
             items: cart.map(item => ({
                 id: item.id,
                 name: item.name,
@@ -124,12 +130,11 @@ export default function OrderPage() {
             })),
             date: new Date().toLocaleDateString('pt-BR'),
             rating: 0,
-            // 🛑 CRUCIAL: Adicionar o timestamp de criação para o cooldown
-            createdAt: Date.now(), 
+            createdAt: Date.now(),
+            deliveryAddress: deliveryAddress, // Salva o endereço no pedido
         };
 
         try {
-            // 🛑 Lógica do LocalStorage 🛑
             const existingOrdersString = localStorage.getItem(ORDERS_STORAGE_KEY);
             const existingOrders: Order[] = existingOrdersString ? JSON.parse(existingOrdersString) : [];
             
@@ -137,10 +142,10 @@ export default function OrderPage() {
 
             localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
             
-            // Dispara o evento de armazenamento para atualizar a página MyOrders em tempo real
             window.dispatchEvent(new Event('storage'));
 
-            setCart([]); // Limpa o carrinho após o sucesso
+            setCart([]);
+            setDeliveryAddress(''); // Limpa o endereço após o envio
             setOrderSent(true);
 
         } catch (e) {
@@ -287,29 +292,46 @@ export default function OrderPage() {
                             </div>
                         )}
                         
-                        {/* Resumo da Compra */}
+                        {/* Endereço de Entrega e Resumo da Compra */}
                         {cart.length > 0 && (
-                            <div className="pt-4 space-y-2 border-t mt-4">
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal:</span>
-                                    <span>{subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            <div className="pt-4 space-y-4 border-t mt-4">
+                                {/* Endereço de Entrega */}
+                                <div className="space-y-2">
+                                     <label htmlFor="address" className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                                        <MapPin className="w-5 h-5 text-primary" />
+                                        Endereço de Entrega
+                                    </label>
+                                    <Input
+                                        id="address"
+                                        value={deliveryAddress}
+                                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                                        placeholder="Digite sua rua, número e bairro..."
+                                        className="h-12 text-base"
+                                    />
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Entrega:</span>
-                                    <span>{deliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                                </div>
-                                <div className="flex justify-between text-2xl font-extrabold text-gray-900 border-t pt-2">
-                                    <span>Total:</span>
-                                    <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+
+                                {/* Resumo Financeiro */}
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Subtotal:</span>
+                                        <span>{subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Entrega:</span>
+                                        <span>{deliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-2xl font-extrabold text-gray-900 border-t pt-2 mt-2">
+                                        <span>Total:</span>
+                                        <span>{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {error && (
-                            <p className="text-red-500 text-sm mt-3 p-2 border border-red-200 bg-red-50 rounded-lg">{error}</p>
+                            <p className="text-red-500 text-sm mt-3 p-2 border border-red-200 bg-red-50 rounded-lg text-center">{error}</p>
                         )}
                         
-                        {/* Botão de Finalizar Pedido */}
                         <Button
                             onClick={handlePlaceOrder}
                             disabled={cart.length === 0 || isSendingOrder}
