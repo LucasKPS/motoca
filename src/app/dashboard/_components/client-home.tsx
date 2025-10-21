@@ -2,10 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Gift, Pizza, Search, ShoppingBasket, Soup, Star } from "lucide-react";
+import { ArrowRight, Pizza, Search, ShoppingBasket, Star } from "lucide-react";
 import CategoryCard from "@/components/dashboard/category-card";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 const restaurants = [
     { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
@@ -13,6 +14,12 @@ const restaurants = [
 ]
 
 export default function ClientHome({ name }: { name?: string }) {
+  const [search, setSearch] = useState('')
+
+  function handleSearch() {
+    window.location.href = `/dashboard/restaurants?q=${search}`
+  }
+
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
@@ -27,7 +34,13 @@ export default function ClientHome({ name }: { name?: string }) {
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input placeholder="Buscar por pratos ou restaurantes..." className="pl-10 h-12 text-base" />
+        <Input 
+          placeholder="Buscar por pratos ou restaurantes..." 
+          className="pl-10 h-12 text-base" 
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSearch()}
+        />
       </div>
 
 
