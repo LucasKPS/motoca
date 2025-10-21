@@ -5,29 +5,29 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Bike, CheckCircle, Clock, MapPin, AlertTriangle, Truck, BellRing, Utensils, User } from "lucide-react"; 
+import { MoreHorizontal, Bike, CheckCircle, Clock, MapPin, AlertTriangle, Truck, BellRing, Utensils, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // IMPORTANDO COMPONENTES DE DIÁLOGO SHADCN
-import { 
-    AlertDialog, 
-    AlertDialogAction, 
-    AlertDialogCancel, 
-    AlertDialogContent, 
-    AlertDialogDescription, 
-    AlertDialogFooter, 
-    AlertDialogHeader, 
-    AlertDialogTitle 
-} from "@/components/ui/alert-dialog"; 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 // CORREÇÃO: Importando DialogTitle para o Modal de Nova Corrida
-import { 
-    Dialog, 
-    DialogContent, 
+import {
+    Dialog,
+    DialogContent,
     DialogHeader,
     DialogTitle // CORRIGIDO: Necessário para Acessibilidade (A11y)
-} from "@/components/ui/dialog"; 
+} from "@/components/ui/dialog";
 
 // --- TIPAGEM E CHAVES DE DADOS (Mantidas) ---
 
@@ -39,7 +39,7 @@ export interface CourierRun {
     status: RunStatus;
     pickupLocation: string;
     deliveryAddress: string;
-    estimatedTime: number; 
+    estimatedTime: number;
     customerName: string;
 }
 
@@ -53,6 +53,8 @@ interface NewRunOffer {
 }
 
 const RUNS_STORAGE_KEY = 'courier_runs_motoca';
+const ONLINE_STATUS_STORAGE_KEY = 'courier_online_status';
+
 
 
 // --- LÓGICA DE PERSISTÊNCIA (Mantida) ---
@@ -122,8 +124,8 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ open, runId, on
                         </Button>
                     </AlertDialogCancel>
                     <AlertDialogAction asChild>
-                        <Button 
-                            onClick={handleConfirm} 
+                        <Button
+                            onClick={handleConfirm}
                             className="bg-green-600 hover:bg-green-700 font-bold"
                         >
                             <CheckCircle className="h-4 w-4 mr-2" />
@@ -142,8 +144,8 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ open, runId, on
 interface NovaCorridaModalProps {
     order: NewRunOffer;
     onClose: () => void;
-    onAccept: (run: NewRunOffer) => void; 
-    onReject: () => void; 
+    onAccept: (run: NewRunOffer) => void;
+    onReject: () => void;
 }
 
 const NovaCorridaModal: React.FC<NovaCorridaModalProps> = ({ order, onClose, onAccept, onReject }) => {
@@ -170,14 +172,14 @@ const NovaCorridaModal: React.FC<NovaCorridaModalProps> = ({ order, onClose, onA
 
         return () => clearInterval(interval);
     }, [countdown, onReject]);
-    
+
     // Função para aceitar e fechar
     const handleAccept = () => {
         if (!expired) {
             onAccept(order);
         }
     };
-    
+
     // Função para rejeitar e fechar
     const handleReject = () => {
         onReject();
@@ -235,15 +237,15 @@ const NovaCorridaModal: React.FC<NovaCorridaModalProps> = ({ order, onClose, onA
                             </div>
                         </CardContent>
                     </Card>
-                    
+
                     {/* Detalhes da Rota (Opcional, mas útil) */}
                     <div className="space-y-2 text-sm text-gray-700">
                         <p className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-primary" /> 
+                            <MapPin className="h-4 w-4 text-primary" />
                             <span className='font-semibold'>Coleta:</span> {order.pickupLocation}
                         </p>
                         <p className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-red-500" /> 
+                            <MapPin className="h-4 w-4 text-red-500" />
                             <span className='font-semibold'>Entrega:</span> {order.deliveryAddress}
                         </p>
                     </div>
@@ -252,14 +254,14 @@ const NovaCorridaModal: React.FC<NovaCorridaModalProps> = ({ order, onClose, onA
 
                 {/* Rodapé com Ações - Buttons Grande como no print */}
                 <div className="p-6 pt-0 flex justify-between gap-4">
-                    <Button 
+                    <Button
                         onClick={handleReject}
                         className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 text-lg"
                         disabled={expired}
                     >
                         <AlertTriangle className="h-5 w-5 mr-2" /> Recusar
                     </Button>
-                    <Button 
+                    <Button
                         onClick={handleAccept}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 text-lg"
                         disabled={expired}
@@ -289,12 +291,12 @@ const runStatusMap: Record<RunStatus, { label: string; icon: React.ElementType, 
 
 interface RunRowProps {
     run: CourierRun;
-    onOpenConfirm: (runId: string) => void; 
+    onOpenConfirm: (runId: string) => void;
 }
 
-const RunRow: React.FC<RunRowProps> = ({ run, onOpenConfirm }) => { 
+const RunRow: React.FC<RunRowProps> = ({ run, onOpenConfirm }) => {
     const statusInfo = runStatusMap[run.status];
-    
+
     return (
         <TableRow>
             <TableCell className="font-bold">{run.id}</TableCell>
@@ -315,10 +317,10 @@ const RunRow: React.FC<RunRowProps> = ({ run, onOpenConfirm }) => {
             <TableCell className="text-right">
                 {/* AÇÃO DE FINALIZAÇÃO MANUAL (Chama a abertura do Modal) */}
                 {run.status === 'in_progress' ? (
-                    <Button 
-                        size="sm" 
+                    <Button
+                        size="sm"
                         className="bg-green-600 hover:bg-green-700 font-bold"
-                        onClick={() => onOpenConfirm(run.id)} 
+                        onClick={() => onOpenConfirm(run.id)}
                     >
                         Entregue!
                     </Button>
@@ -348,20 +350,47 @@ const RunRow: React.FC<RunRowProps> = ({ run, onOpenConfirm }) => {
 export default function CourierRunsPage() {
     const [liveRuns, setLiveRuns] = useState<CourierRun[]>(getRunsFromLocalStorage());
     const [offer, setOffer] = useState<NewRunOffer | null>(null); // ALTERADO: Para armazenar a oferta completa
-    
+
     // NOVO ESTADO: Rastreia a corrida a ser confirmada
     const [runIdToComplete, setRunIdToComplete] = useState<string | null>(null);
+
+    const [isOnline, setIsOnline] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const storedStatus = localStorage.getItem(ONLINE_STATUS_STORAGE_KEY);
+            return storedStatus ? JSON.parse(storedStatus) : true;
+        }
+        return true;
+    });
+
+    useEffect(() => {
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === ONLINE_STATUS_STORAGE_KEY) {
+                setIsOnline(event.newValue ? JSON.parse(event.newValue) : true);
+            }
+        };
+
+        const storedStatus = localStorage.getItem(ONLINE_STATUS_STORAGE_KEY);
+        if (storedStatus) {
+            setIsOnline(JSON.parse(storedStatus));
+        }
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
 
     // Efeito para persistir as corridas
     useEffect(() => {
         saveRunsToLocalStorage(liveRuns);
     }, [liveRuns]);
-    
+
     // Função que será passada para o Dialog
     const handleConfirmCompletion = useCallback((runId: string) => {
         // Adicionando timestamp de entrega no momento da conclusão
-        const deliveredAt = new Date().toISOString(); 
-        setLiveRuns(prevRuns => prevRuns.map(run => 
+        const deliveredAt = new Date().toISOString();
+        setLiveRuns(prevRuns => prevRuns.map(run =>
             run.id === runId ? { ...run, status: 'delivered', deliveredAt } : run
         ));
     }, []);
@@ -380,7 +409,7 @@ export default function CourierRunsPage() {
         const newRun: CourierRun = {
             id: offer.id,
             value: offer.value,
-            status: 'in_progress', 
+            status: 'in_progress',
             pickupLocation: offer.pickupLocation,
             deliveryAddress: offer.deliveryAddress,
             estimatedTime: Math.floor(Math.random() * 15) + 10,
@@ -423,16 +452,27 @@ export default function CourierRunsPage() {
                     </h1>
                     <p className="text-muted-foreground mt-1">Gerencie e acompanhe o status das suas entregas.</p>
                 </div>
-                
-                <Button 
+
+                <Button
                     onClick={handleSimulateRun}
-                    className="h-10 px-4 py-2 font-bold"
-                    style={{ backgroundColor: '#FF5050', color: 'white' }}
+                    disabled={!isOnline}
+                    className="h-10 px-4 py-2 font-bold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: isOnline ? '#FF5050' : undefined, color: 'white' }}
                 >
-                    Simular Nova Corrida 🛵
+                    {isOnline ? 'Simular Nova Corrida 🛵' : 'Fique Online para Simular'}
                 </Button>
             </div>
-            
+
+            {!isOnline && (
+                 <Alert variant="destructive" className="mt-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Você está Offline</AlertTitle>
+                    <AlertDescription>
+                       Para receber e simular novas corridas, por favor, altere seu status para "Online" na tela de Início.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Card>
                 <CardContent className="p-0">
                     <Tabs defaultValue="in_progress">
@@ -464,10 +504,10 @@ export default function CourierRunsPage() {
                                             </TableHeader>
                                             <TableBody>
                                                 {filteredRuns.sort((a, b) => b.id.localeCompare(a.id)).map(run => (
-                                                    <RunRow 
-                                                        key={run.id} 
-                                                        run={run} 
-                                                        onOpenConfirm={handleOpenConfirm} 
+                                                    <RunRow
+                                                        key={run.id}
+                                                        run={run}
+                                                        onOpenConfirm={handleOpenConfirm}
                                                     />
                                                 ))}
                                             </TableBody>
@@ -490,10 +530,10 @@ export default function CourierRunsPage() {
                     </Tabs>
                 </CardContent>
             </Card>
-            
+
             {/* NOVO: RENDERIZAÇÃO DO MODAL DE NOVA CORRIDA */}
             {offer && (
-                <NovaCorridaModal 
+                <NovaCorridaModal
                     order={offer}
                     onClose={handleRejectRun} // Fecha o modal se o usuário clicar no backdrop (padrão Dialog)
                     onAccept={handleAcceptRun}
@@ -503,7 +543,7 @@ export default function CourierRunsPage() {
 
             {/* MODAL DE CONFIRMAÇÃO ESTILIZADO (Entregue) */}
             {runIdToComplete && (
-                <ConfirmationDialog 
+                <ConfirmationDialog
                     open={!!runIdToComplete}
                     runId={runIdToComplete}
                     onClose={handleCloseConfirm}
