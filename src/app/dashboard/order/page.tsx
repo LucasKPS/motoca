@@ -46,7 +46,7 @@ const RESTAURANT_DETAILS = {
 };
 
 // CHAVE FIXA PARA SIMULAÇÃO NO LOCAL STORAGE
-const ORDERS_STORAGE_KEY = 'academic_orders';
+const ORDERS_STORAGE_KEY = 'orders';
 
 
 // --- Componente Principal ---
