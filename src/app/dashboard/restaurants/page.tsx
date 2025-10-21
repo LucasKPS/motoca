@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,13 @@ import { Slider } from "@/components/ui/slider";
 import { ArrowRight, Utensils, Search, Star, SlidersHorizontal, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Order } from "@/lib/types";
 
 const RESTAURANTS_DATA = [
     // PIZZARIA DELÍCIA
-    { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'https://logo.clearbit.com/pizzahut.com', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
+    { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', category: 'Pizza', deliveryTime: '25-35 min', logo: 'https://logo.clearbit.com/pizzahut.com', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop', href: '/dashboard/order' },
     // BURGER QUEEN
-    { id: 'burger-queen', name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'https://logo.clearbit.com/burgerking.com', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop', href: '/dashboard/order' },
+    { id: 'burger-queen', name: 'Burger Queen', category: 'Lanches', deliveryTime: '20-30 min', logo: 'https://logo.clearbit.com/burgerking.com', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop', href: '/dashboard/order' },
 
 ]
 
@@ -32,6 +33,18 @@ export default function RestaurantsPage() {
     const [ratingFilter, setRatingFilter] = useState(0);
     const [tempRating, setTempRating] = useState(ratingFilter);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [restaurants, setRestaurants] = useState(RESTAURANTS_DATA.map(r => ({ ...r, rating: 0 })));
+
+    useEffect(() => {
+        const orders: Order[] = JSON.parse(localStorage.getItem('orders') || '[]');
+        const updatedRestaurants = RESTAURANTS_DATA.map(r => {
+            const restaurantOrders = orders.filter(o => o.restaurant === r.name && o.rating);
+            const totalRating = restaurantOrders.reduce((acc, o) => acc + (o.rating || 0), 0);
+            const averageRating = restaurantOrders.length > 0 ? totalRating / restaurantOrders.length : 0;
+            return { ...r, rating: averageRating };
+        });
+        setRestaurants(updatedRestaurants);
+    }, []);
 
     const handleCategoryToggle = (category: string) => {
         setSelectedCategories(prev => 
@@ -41,12 +54,11 @@ export default function RestaurantsPage() {
         );
     };
 
-
     const handleApplyFilters = () => {
         setRatingFilter(tempRating);
     };
 
-    const filteredRestaurants = RESTAURANTS_DATA.filter(r =>
+    const filteredRestaurants = restaurants.filter(r =>
         (r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
          r.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
         r.rating >= ratingFilter &&
@@ -199,7 +211,7 @@ export default function RestaurantsPage() {
                                     {/* Avaliação */}
                                     <div className="flex items-center gap-1">
                                         <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                        <span className="font-bold text-gray-700">{r.rating}</span>
+                                        <span className="font-bold text-gray-700">{r.rating.toFixed(1)}</span>
                                     </div>
 
                                     <span className='text-xs'>•</span>

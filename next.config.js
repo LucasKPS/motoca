@@ -1,30 +1,50 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Configurações para garantir que imagens externas sejam carregadas corretamente
     images: {
+        dangerouslyAllowSVG: true,
+        // Configuração de padrões de domínios remotos
         remotePatterns: [
+            // 1. Domínio principal para Imagens de Capa (Unsplash)
             {
                 protocol: 'https',
-                hostname: 'images.unsplash.com',
+                hostname: 'images.unsplash.com', 
                 port: '',
-                pathname: '/**',
+                pathname: '/**', 
             },
+            // 2. Domínio principal para Logos de Restaurante (Clearbit)
             {
                 protocol: 'https',
-                hostname: 'images.ctfassets.net',
+                hostname: 'logo.clearbit.com', 
                 port: '',
-                pathname: '/**',
+                pathname: '/**', 
             },
-             {
+            // 3. Domínio de Logo Alternativo (Adicionado para o Sushi House)
+            {
                 protocol: 'https',
-                hostname: 'placehold.co',
+                hostname: 'api.logoduck.com',
                 port: '',
-                pathname: '/**',
+                pathname: '/**', 
             },
+            // 4. Domínio para Placeholders e Testes (TCDN)
             {
                 protocol: 'https',
                 hostname: 'images.tcdn.com.br',
                 port: '',
-                pathname: '/**',
+                pathname: '/**', 
+            },
+            // 5. Domínios de Placeholders Genéricos
+            {
+                protocol: 'https',
+                hostname: 'placehold.co',
+                port: '',
+                pathname: '/**', 
+            },
+            {
+                protocol: 'https',
+                hostname: 'picsum.photos',
+                port: '',
+                pathname: '/**', 
             },
         ],
     },

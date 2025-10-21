@@ -4,20 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ListOrdered, Package, CheckCircle, XCircle, Star, Clock } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
+import { Order } from "@/lib/types";
 
 // --- Definições de Tipos ---
 
 type StatusKey = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-
-interface Order {
-    id: string;
-    restaurant: string;
-    date: string; 
-    total: number;
-    status: StatusKey;
-    rating: number; 
-    createdAt: number; 
-}
 
 interface StatusInfo {
     label: string;
@@ -34,7 +25,7 @@ const statusMap: Record<StatusKey, StatusInfo> = {
   cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-red-600' },
 };
 
-const ORDERS_STORAGE_KEY = 'academic_orders';
+const ORDERS_STORAGE_KEY = 'orders'; // Chave corrigida
 const COOLDOWN_MS = 10000;
 
 // --- Componente Principal ---
@@ -50,7 +41,7 @@ export default function MyOrdersPage() {
         try {
             const ordersString = localStorage.getItem(ORDERS_STORAGE_KEY);
             const loadedOrders: Order[] = ordersString ? JSON.parse(ordersString) : [];
-            loadedOrders.sort((a, b) => b.createdAt - a.createdAt);
+            loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setOrders(loadedOrders);
         } catch (e) {
             console.error("Erro ao carregar pedidos do LocalStorage:", e);
@@ -92,7 +83,7 @@ export default function MyOrdersPage() {
             localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
             
             // Atualiza o estado local para refletir a mudança imediatamente
-            updatedOrders.sort((a, b) => b.createdAt - a.createdAt);
+            updatedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setOrders(updatedOrders);
 
         } catch (e) {
@@ -108,31 +99,6 @@ export default function MyOrdersPage() {
             window.removeEventListener('storage', loadOrders);
         };
     }, []);
-
-    // Efeito para Cooldown de Status
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const now = Date.now();
-            let needsUpdate = false;
-            
-            const updatedOrders = orders.map(order => {
-                if (order.status === 'pending' && now - order.createdAt >= COOLDOWN_MS) {
-                    console.log(`Pedido ${order.id} movido para 'delivered' após cooldown.`);
-                    needsUpdate = true;
-                    return { ...order, status: 'delivered' as StatusKey };
-                }
-                return order;
-            });
-
-            if (needsUpdate) {
-                localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
-                // Dispara a atualização do estado
-                loadOrders(); 
-            }
-        }, 2000); 
-
-        return () => clearInterval(timer);
-    }, [orders]); 
 
     if (isLoading) {
         return (
