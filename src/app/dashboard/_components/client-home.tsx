@@ -10,8 +10,6 @@ import Link from "next/link";
 const restaurants = [
     { name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
     { name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'burgerking' },
-    { name: 'Sushi House', rating: 4.9, category: 'Japonesa', deliveryTime: '35-45 min', logo: 'subway' },
-    { name: 'Cantina Italiana', rating: 4.7, category: 'Italiana', deliveryTime: '30-40 min', logo: 'starbucks' },
 ]
 
 export default function ClientHome({ name }: { name?: string }) {
@@ -42,12 +40,6 @@ export default function ClientHome({ name }: { name?: string }) {
             <Link href="/dashboard/restaurants?category=Lanches">
               <CategoryCard icon={ShoppingBasket} label="Lanches" />
             </Link>
-            <Link href="/dashboard/restaurants?category=Brasileira">
-              <CategoryCard icon={Soup} label="Brasileira" />
-            </Link>
-            <Link href="/dashboard/restaurants?category=Promoções">
-              <CategoryCard icon={Gift} label="Promoções" />
-            </Link>
         </div>
       </div>
       
@@ -56,9 +48,11 @@ export default function ClientHome({ name }: { name?: string }) {
         <CardContent className="p-6">
             <h2 className="font-headline font-bold text-2xl">Entrega grátis no seu primeiro pedido!</h2>
             <p className="mt-2 max-w-sm">Use o cupom <span className="font-bold bg-primary-foreground/20 px-2 py-1 rounded-md">PRIMEIRACOMPRA</span> e aproveite.</p>
-            <Button variant="secondary" className="mt-4">
-                Ver Restaurantes <ArrowRight className="ml-2" />
-            </Button>
+            <Link href="/dashboard/restaurants">
+              <Button variant="secondary" className="mt-4">
+                  Ver Restaurantes <ArrowRight className="ml-2" />
+              </Button>
+            </Link>
         </CardContent>
         <div className="w-full md:w-1/3 h-32 md:h-full relative">
             <Image 
