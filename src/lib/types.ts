@@ -7,17 +7,19 @@ export interface Delivery {
   customerName: string;
   courier: string;
   createdAt: string;
-  earnings: number; // <-- Adicione este campo
-  // ...outros campos necessários...
+  earnings: number;
 };
 
 export type Order = {
     id: string;
     restaurant: string;
     date: string;
-    status: 'in_transit' | 'delivered' | 'cancelled';
     total: number;
-    rating?: number;
+    status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+    items: { id: number, name: string, price: number, quantity: number }[];
+    rating: number;
+    createdAt: number; 
+    deliveryAddress: string;
 }
 
 export type MerchantOrder = {

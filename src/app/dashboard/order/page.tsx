@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Minus, X, Utensils, CheckCircle, Package, ArrowLeft, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Order } from '@/lib/types';
 
 // --- Configurações e Tipos ---
 
@@ -19,18 +20,6 @@ interface MenuItem {
 
 interface CartItem extends MenuItem {
     quantity: number;
-}
-
-interface Order {
-    id: string;
-    restaurant: string;
-    date: string;
-    total: number;
-    status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-    items: { id: number, name: string, price: number, quantity: number }[];
-    rating: number;
-    createdAt: number; 
-    deliveryAddress: string; // Endereço de entrega
 }
 
 // Dados de Simulação
@@ -311,7 +300,7 @@ export default function OrderPage() {
                                 </div>
 
                                 {/* Resumo Financeiro */}
-                                <div className="space-y-2 pt-2">
+.                                <div className="space-y-2 pt-2">
                                     <div className="flex justify-between text-gray-600">
                                         <span>Subtotal:</span>
                                         <span>{subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
