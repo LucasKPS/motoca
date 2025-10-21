@@ -1,10 +1,11 @@
 'use client';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Gift, Pizza, Search, ShoppingBasket, Soup, Star } from "lucide-react";
 import CategoryCard from "@/components/dashboard/category-card";
 import Image from "next/image";
+import Link from "next/link";
 
 const restaurants = [
     { name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
@@ -35,10 +36,18 @@ export default function ClientHome({ name }: { name?: string }) {
       {/* Categories */}
       <div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <CategoryCard icon={Pizza} label="Pizza" />
-            <CategoryCard icon={ShoppingBasket} label="Lanches" />
-            <CategoryCard icon={Soup} label="Brasileira" />
-            <CategoryCard icon={Gift} label="Promoções" />
+            <Link href="/dashboard/restaurants?category=Pizza">
+              <CategoryCard icon={Pizza} label="Pizza" />
+            </Link>
+            <Link href="/dashboard/restaurants?category=Lanches">
+              <CategoryCard icon={ShoppingBasket} label="Lanches" />
+            </Link>
+            <Link href="/dashboard/restaurants?category=Brasileira">
+              <CategoryCard icon={Soup} label="Brasileira" />
+            </Link>
+            <Link href="/dashboard/restaurants?category=Promoções">
+              <CategoryCard icon={Gift} label="Promoções" />
+            </Link>
         </div>
       </div>
       

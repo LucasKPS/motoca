@@ -32,10 +32,11 @@ const CATEGORIES = [...new Set(RESTAURANTS_DATA.map(r => r.category))];
 export default function RestaurantsPage() {
     const searchParams = useSearchParams();
     const initialSearchTerm = searchParams.get('q') || '';
+    const initialCategory = searchParams.get('category');
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [ratingFilter, setRatingFilter] = useState(0);
     const [tempRating, setTempRating] = useState(ratingFilter);
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
     const [restaurants, setRestaurants] = useState(RESTAURANTS_DATA.map(r => ({ ...r, rating: 0 })));
 
     useEffect(() => {
