@@ -3,13 +3,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
-import { ArrowRight, ShoppingCart, CookingPot, Bike, X } from 'lucide-react';
+import { ArrowRight, ShoppingCart, CookingPot, Bike, X, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
 
 export default function LandingPage() {
   const [vencedor, setVencedor] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const pilotos = ['João', 'Maria', 'Carlos', 'Ana']; // Altere conforme necessário
+  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
 
   function simularCorrida() {
     console.log('Simulando corrida...');
@@ -22,6 +26,12 @@ export default function LandingPage() {
     setShowModal(false);
     setVencedor(null);
   }
+
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+        router.push(`/dashboard/restaurants?q=${searchTerm.trim()}`);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -47,6 +57,19 @@ export default function LandingPage() {
         <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl">
           Conectamos você aos melhores restaurantes da cidade, com entregas rápidas e eficientes. A solução completa para clientes, restaurantes e entregadores.
         </p>
+        <div className="mt-8 flex w-full max-w-md items-center space-x-2">
+            <Input
+                type="search"
+                placeholder="Encontre restaurantes ou categorias..."
+                className="flex-1"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <Button type="submit" onClick={handleSearch}>
+                <Search className="mr-2 h-4 w-4" /> Buscar
+            </Button>
+        </div>
       </main>
 
       {/* Modal Pop-up */}

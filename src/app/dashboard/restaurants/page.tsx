@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,9 @@ const RESTAURANTS_DATA = [
 const CATEGORIES = [...new Set(RESTAURANTS_DATA.map(r => r.category))];
 
 export default function RestaurantsPage() {
-    const [searchTerm, setSearchTerm] = useState('');
+    const searchParams = useSearchParams();
+    const initialSearchTerm = searchParams.get('q') || '';
+    const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [ratingFilter, setRatingFilter] = useState(0);
     const [tempRating, setTempRating] = useState(ratingFilter);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
