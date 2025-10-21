@@ -25,80 +25,77 @@ const statusMap: Record<StatusKey, StatusInfo> = {
   cancelled: { label: 'Cancelado', icon: XCircle, color: 'text-red-600' },
 };
 
-const ORDERS_STORAGE_KEY = 'orders'; // Chave corrigida
-const COOLDOWN_MS = 10000;
+const ORDERS_STORAGE_KEY = 'orders';
+const COOLDOWN_MS = 10000; // 10 segundos para cada estágio
 
 // --- Componente Principal ---
 
 export default function MyOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    // Estado para o efeito de hover nas estrelas
     const [hoverRating, setHoverRating] = useState<{[orderId: string]: number | null}>({});
 
-    // Função para carregar dados do localStorage
     const loadOrders = () => {
         try {
             const ordersString = localStorage.getItem(ORDERS_STORAGE_KEY);
             const loadedOrders: Order[] = ordersString ? JSON.parse(ordersString) : [];
-            loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            loadedOrders.sort((a, b) => b.createdAt - a.createdAt);
             setOrders(loadedOrders);
         } catch (e) {
-            console.error("Erro ao carregar pedidos do LocalStorage:", e);
+            console.error("Erro ao carregar pedidos:", e);
             setOrders([]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Função para atualizar o status no LocalStorage
-    const updateOrderStatusInStorage = (orderId: string, newStatus: StatusKey) => {
-        try {
-            const existingOrdersString = localStorage.getItem(ORDERS_STORAGE_KEY);
-            let existingOrders: Order[] = existingOrdersString ? JSON.parse(existingOrdersString) : [];
-            
-            existingOrders = existingOrders.map(order => 
-                order.id === orderId ? { ...order, status: newStatus } : order
-            );
-
-            localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(existingOrders));
-            // Recarrega os pedidos para refletir a mudança
-            loadOrders();
-            
-        } catch (e) {
-            console.error("Erro ao atualizar status no LocalStorage:", e);
-        }
+    const updateAndSaveOrders = (updatedOrders: Order[]) => {
+        updatedOrders.sort((a, b) => b.createdAt - a.createdAt);
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
+        setOrders(updatedOrders);
     };
-    
-    // ⭐️ Função para atualizar a avaliação
+
     const handleRatingChange = (orderId: string, newRating: number) => {
-        try {
-            const existingOrdersString = localStorage.getItem(ORDERS_STORAGE_KEY);
-            let existingOrders: Order[] = existingOrdersString ? JSON.parse(existingOrdersString) : [];
-
-            const updatedOrders = existingOrders.map(order =>
-                order.id === orderId ? { ...order, rating: newRating } : order
-            );
-            
-            localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
-            
-            // Atualiza o estado local para refletir a mudança imediatamente
-            updatedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setOrders(updatedOrders);
-
-        } catch (e) {
-            console.error("Erro ao atualizar avaliação no LocalStorage:", e);
-        }
+        const updatedOrders = orders.map(order =>
+            order.id === orderId ? { ...order, rating: newRating } : order
+        );
+        updateAndSaveOrders(updatedOrders);
     };
-    
-    // Efeito para carregar os pedidos na montagem e escutar mudanças
+
     useEffect(() => {
         loadOrders();
         window.addEventListener('storage', loadOrders);
+
+        const interval = setInterval(() => {
+            const now = Date.now();
+            let ordersChanged = false;
+
+            const updatedOrders = orders.map(order => {
+                const timeSinceCreation = now - order.createdAt;
+
+                if (order.status === 'pending' && timeSinceCreation >= COOLDOWN_MS) {
+                    ordersChanged = true;
+                    return { ...order, status: 'in_transit' as StatusKey };
+                }
+                
+                if (order.status === 'in_transit' && timeSinceCreation >= COOLDOWN_MS * 2) {
+                    ordersChanged = true;
+                    return { ...order, status: 'delivered' as StatusKey };
+                }
+
+                return order;
+            });
+
+            if (ordersChanged) {
+                updateAndSaveOrders(updatedOrders);
+            }
+        });
+
         return () => {
             window.removeEventListener('storage', loadOrders);
+            clearInterval(interval);
         };
-    }, []);
+    }, [orders]);
 
     if (isLoading) {
         return (
@@ -122,7 +119,7 @@ export default function MyOrdersPage() {
                     </div>
                 ) : (
                     orders.map(order => {
-                        const statusInfo = statusMap[order.status] || statusMap.in_transit;
+                        const statusInfo = statusMap[order.status] || statusMap.pending;
                         const StatusIcon = statusInfo.icon;
                         
                         return (
@@ -131,7 +128,7 @@ export default function MyOrdersPage() {
                                     <div className='flex flex-col'>
                                         <CardTitle className="font-bold text-lg text-gray-800">{order.restaurant}</CardTitle>
                                         <CardDescription className="text-sm text-gray-500 mt-1">
-                                            Pedido #{order.id} • {order.date}
+                                            Pedido #{order.id} • {new Date(order.createdAt).toLocaleDateString('pt-BR')}
                                         </CardDescription>
                                     </div>
                                     <div className="text-right flex flex-col items-end">
@@ -147,18 +144,8 @@ export default function MyOrdersPage() {
                                 
                                 <CardContent className="pt-4 border-t border-gray-100 mt-2">
                                     <div className="flex justify-end items-center w-full">
-                                        
-                                        {order.status === 'pending' && (
-                                            <Button variant="default" size="sm">Acompanhar Preparação</Button>
-                                        )}
-                                        
-                                        {order.status === 'in_transit' && (
-                                            <Button variant="default" size="sm">Acompanhar Pedido</Button>
-                                        )}
-                                        
-                                        {order.status === 'delivered' && (
+                                        {order.status === 'delivered' ? (
                                             <div className="flex justify-between items-center w-full">
-                                                {/* ⭐️ Sistema de Avaliação Interativo ⭐️ */}
                                                 <div 
                                                     className="flex items-center gap-1"
                                                     onMouseLeave={() => setHoverRating(prev => ({ ...prev, [order.id]: null }))}
@@ -182,10 +169,8 @@ export default function MyOrdersPage() {
                                                 </div>
                                                 <Button variant="outline" size="sm">Pedir Novamente</Button>
                                             </div>
-                                        )}
-                                        
-                                        {order.status === 'cancelled' && (
-                                            <Button variant="secondary" size="sm">Ver Detalhes</Button>
+                                        ) : (
+                                            <Button variant="secondary" size="sm" disabled>Acompanhar Pedido</Button>
                                         )}
                                     </div>
                                 </CardContent>
