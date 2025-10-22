@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ListOrdered, Package, CheckCircle, XCircle, Star, Clock } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { Order } from "@/lib/types";
 
 // --- Definições de Tipos ---
-
 type StatusKey = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
 
 interface StatusInfo {
@@ -17,7 +16,6 @@ interface StatusInfo {
 }
 
 // --- Mapeamento de Status ---
-
 const statusMap: Record<StatusKey, StatusInfo> = {
   pending: { label: 'Em Preparação', icon: Clock, color: 'text-orange-600' }, 
   in_transit: { label: 'A caminho', icon: Package, color: 'text-blue-600' },
@@ -29,73 +27,74 @@ const ORDERS_STORAGE_KEY = 'orders';
 const COOLDOWN_MS = 10000; // 10 segundos para cada estágio
 
 // --- Componente Principal ---
-
 export default function MyOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hoverRating, setHoverRating] = useState<{[orderId: string]: number | null}>({});
 
-    const loadOrders = () => {
+    const loadOrders = useCallback(() => {
         try {
             const ordersString = localStorage.getItem(ORDERS_STORAGE_KEY);
             const loadedOrders: Order[] = ordersString ? JSON.parse(ordersString) : [];
-            loadedOrders.sort((a, b) => b.createdAt - a.createdAt);
-            setOrders(loadedOrders);
+            // Create a new sorted array to avoid mutation issues
+            const sortedOrders = [...loadedOrders].sort((a, b) => b.createdAt - a.createdAt);
+            setOrders(sortedOrders);
         } catch (e) {
             console.error("Erro ao carregar pedidos:", e);
             setOrders([]);
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const updateAndSaveOrders = (updatedOrders: Order[]) => {
-        updatedOrders.sort((a, b) => b.createdAt - a.createdAt);
-        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
-        setOrders(updatedOrders);
-    };
+    }, []);
 
     const handleRatingChange = (orderId: string, newRating: number) => {
-        const updatedOrders = orders.map(order =>
-            order.id === orderId ? { ...order, rating: newRating } : order
-        );
-        updateAndSaveOrders(updatedOrders);
+        setOrders(prevOrders => {
+            const updatedOrders = prevOrders.map(order =>
+                order.id === orderId ? { ...order, rating: newRating } : order
+            );
+            localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
+            return updatedOrders;
+        });
     };
 
+    // Effect for initial load and listening to storage changes
     useEffect(() => {
         loadOrders();
         window.addEventListener('storage', loadOrders);
-
-        const interval = setInterval(() => {
-            const now = Date.now();
-            let ordersChanged = false;
-
-            const updatedOrders = orders.map(order => {
-                const timeSinceCreation = now - order.createdAt;
-
-                if (order.status === 'pending' && timeSinceCreation >= COOLDOWN_MS) {
-                    ordersChanged = true;
-                    return { ...order, status: 'in_transit' as StatusKey };
-                }
-                
-                if (order.status === 'in_transit' && timeSinceCreation >= COOLDOWN_MS * 2) {
-                    ordersChanged = true;
-                    return { ...order, status: 'delivered' as StatusKey };
-                }
-
-                return order;
-            });
-
-            if (ordersChanged) {
-                updateAndSaveOrders(updatedOrders);
-            }
-        });
-
         return () => {
             window.removeEventListener('storage', loadOrders);
-            clearInterval(interval);
         };
-    }, [orders]);
+    }, [loadOrders]);
+
+    // Effect for automatic status updates, runs only on mount
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = Date.now();
+            setOrders(prevOrders => {
+                let ordersChanged = false;
+                const updatedOrders = prevOrders.map(order => {
+                    const timeSinceCreation = now - order.createdAt;
+                    if (order.status === 'pending' && timeSinceCreation >= COOLDOWN_MS) {
+                        ordersChanged = true;
+                        return { ...order, status: 'in_transit' as StatusKey };
+                    }
+                    if (order.status === 'in_transit' && timeSinceCreation >= COOLDOWN_MS * 2) {
+                        ordersChanged = true;
+                        return { ...order, status: 'delivered' as StatusKey };
+                    }
+                    return order;
+                });
+
+                if (ordersChanged) {
+                    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updatedOrders));
+                    return updatedOrders;
+                }
+                return prevOrders;
+            });
+        }, COOLDOWN_MS);
+
+        return () => clearInterval(interval);
+    }, []); // Empty dependency array ensures this runs only once
 
     if (isLoading) {
         return (
