@@ -129,7 +129,7 @@ export default function EarningsPage() {
                         <DollarSign className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent className="text-center">
-                        <div className="text-4xl font-extrabold text-primary">{formatCurrency(totalEarnings)}</div>
+                        <div className="text-3xl font-extrabold text-primary">{formatCurrency(totalEarnings)}</div>
                         <p className="text-xs text-muted-foreground mt-2">Soma no período selecionado</p>
                     </CardContent>
                 </Card>
@@ -140,7 +140,7 @@ export default function EarningsPage() {
                         <Truck className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="text-center">
-                        <div className="text-4xl font-extrabold text-foreground">{totalDeliveries}</div>
+                        <div className="text-3xl font-extrabold text-foreground">{totalDeliveries}</div>
                         <p className="text-xs text-muted-foreground mt-2">Entregas no período</p>
                     </CardContent>
                 </Card>
@@ -151,7 +151,7 @@ export default function EarningsPage() {
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="text-center">
-                        <div className="text-4xl font-extrabold text-foreground">{formatCurrency(averageEarning)}</div>
+                        <div className="text-3xl font-extrabold text-foreground">{formatCurrency(averageEarning)}</div>
                         <p className="text-xs text-muted-foreground mt-2">Média de ganho por entrega</p>
                     </CardContent>
                 </Card>
@@ -162,7 +162,7 @@ export default function EarningsPage() {
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="text-center">
-                        <div className="text-4xl font-extrabold text-foreground">{formatCurrency(bestEarning)}</div>
+                        <div className="text-3xl font-extrabold text-foreground">{formatCurrency(bestEarning)}</div>
                         <p className="text-xs text-muted-foreground mt-2">Seu recorde</p>
                     </CardContent>
                 </Card>
