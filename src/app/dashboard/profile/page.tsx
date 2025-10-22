@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,46 +9,48 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth, useUser } from "@/firebase";
-import { Bike, DollarSign, Edit, Star, Truck } from "lucide-react";
+import { getProfile, updateProfile } from '@/firebase/auth';
+import { Bike, DollarSign, Edit, Star, Truck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Delivery } from "@/lib/types";
 import { useToast } from '@/hooks/use-toast';
 
-interface ProfilePageProps {
-    deliveries?: Delivery[];
-    name?: string;
-    vehicle?: string;
-    setVehicle?: (value: string) => void;
-    plate?: string;
-    setPlate?: (value: string) => void;
-    notifyNewRuns?: boolean;
-    setNotifyNewRuns?: (value: boolean) => void;
-    notifyPromos?: boolean;
-    setNotifyPromos?: (value: boolean) => void;
-    avatarUrl?: string;
-    setAvatarUrl?: (value: string) => void;
-}
-
-
-export default function ProfilePage({ 
-    deliveries = [],
-    name,
-    vehicle = 'moto',
-    setVehicle = () => {},
-    plate = 'BRA2E19',
-    setPlate = () => {},
-    notifyNewRuns = true,
-    setNotifyNewRuns = () => {},
-    notifyPromos = false,
-    setNotifyPromos = () => {},
-    avatarUrl = '',
-    setAvatarUrl = () => {},
-}: ProfilePageProps) {
+export default function ProfilePage() {
   const { user } = useUser();
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // User profile state
+  const [name, setName] = useState(user?.displayName ?? 'Usuário');
+  const [vehicle, setVehicle] = useState('moto');
+  const [plate, setPlate] = useState('');
+  const [notifyNewRuns, setNotifyNewRuns] = useState(true);
+  const [notifyPromos, setNotifyPromos] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL ?? '');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Mock data - replace with real data fetching
+  const deliveries: Delivery[] = []; 
+
+  useEffect(() => {
+    if (user) {
+      setName(user.displayName ?? user.email?.split('@')[0] ?? 'Usuário');
+      const fetchProfile = async () => {
+        const profile = await getProfile(user.uid);
+        if (profile) {
+          setVehicle(profile.vehicle ?? 'moto');
+          setPlate(profile.plate ?? '');
+          setNotifyNewRuns(profile.notifyNewRuns ?? true);
+          setNotifyPromos(profile.notifyPromos ?? false);
+          setAvatarUrl(profile.avatarUrl ?? user.photoURL ?? '');
+        }
+      };
+      fetchProfile();
+    }
+  }, [user]);
+
 
   const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
   const totalDeliveries = deliveredDeliveries.length;
@@ -73,13 +75,35 @@ export default function ProfilePage({
     }
   };
 
-  const handleSaveChanges = () => {
-    // In a real app, you'd save this data to your backend/database.
-    toast({
-      title: "Perfil Salvo!",
-      description: "Suas informações foram atualizadas com sucesso.",
-    });
-  };
+ const handleSaveChanges = async () => {
+    if (user) {
+        setIsLoading(true);
+        try {
+            await updateProfile(user.uid, { 
+                vehicle, 
+                plate, 
+                notifyNewRuns, 
+                notifyPromos, 
+                avatarUrl 
+            });
+            toast({
+                title: "Perfil Salvo!",
+                description: "Suas informações foram atualizadas com sucesso.",
+            });
+        } catch (error) {
+            console.error("Erro ao salvar o perfil:", error);
+            toast({
+                title: "Erro ao Salvar",
+                description: "Não foi possível atualizar suas informações. Tente novamente mais tarde.",
+                variant: "destructive",
+            });
+        }
+        finally {
+            setIsLoading(false);
+        }
+    }
+};
+
 
   const handleLogout = () => {
     auth.signOut();
@@ -98,9 +122,9 @@ export default function ProfilePage({
                 <CardHeader className="items-center text-center">
                     <Avatar className="w-24 h-24 mb-4">
                         <AvatarImage src={avatarUrl} />
-                        <AvatarFallback>{name?.charAt(0) ?? user?.email?.charAt(0) ?? 'U'}</AvatarFallback>
+                        <AvatarFallback>{name?.charAt(0) ?? 'U'}</AvatarFallback>
                     </Avatar>
-                    <CardTitle className="font-headline">{name ?? 'Usuário'}</CardTitle>
+                    <CardTitle className="font-headline">{name}</CardTitle>
                     <CardDescription>{user?.email}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
@@ -178,7 +202,7 @@ export default function ProfilePage({
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="plate">Placa do Veículo</Label>
-                    <Input id="plate" value={plate} onChange={(e) => setPlate(e.target.value)} />
+                    <Input id="plate" value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} placeholder="ABC-1234"/>
                 </div>
                 <div className="space-y-4 pt-4">
                     <Label>Notificações</Label>
@@ -193,7 +217,10 @@ export default function ProfilePage({
                 </div>
 
                 <div className="pt-4">
-                    <Button className="w-full" onClick={handleSaveChanges}>Salvar Alterações</Button>
+                     <Button className="w-full" onClick={handleSaveChanges} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isLoading ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
                 </div>
             </CardContent>
             </Card>
