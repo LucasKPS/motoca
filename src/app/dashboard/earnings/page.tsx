@@ -5,24 +5,15 @@ import { DollarSign, Truck, TrendingUp, Calendar, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CourierRun, RunStatus } from '../runs/page'; // Importando a tipagem da tela de corridas
-
-// --- TIPOS E CHAVES ---
+import { CourierRun, RunStatus } from '../runs/page';
 
 type Period = 'today' | 'week' | 'month' | 'all';
 const RUNS_STORAGE_KEY = 'courier_runs_motoca'; 
 
-// Adicione um campo de deliveredAt no tipo para fins de cálculo e persistência.
-// Assumimos que a tela de runs atualizará isso, mas garantimos um fallback aqui.
 interface EarningsRun extends CourierRun {
     deliveredAt: string;
 }
 
-// --- FUNÇÕES DE LÓGICA DE DADOS ---
-
-/**
- * Carrega corridas do LocalStorage, filtra as concluídas e garante a presença de deliveredAt.
- */
 const getDeliveredRuns = (): EarningsRun[] => {
     if (typeof window === 'undefined') return [];
 
@@ -35,7 +26,6 @@ const getDeliveredRuns = (): EarningsRun[] => {
         return runs
             .filter(run => run.status === 'delivered')
             .map(run => ({
-                // Adiciona deliveredAt. Para dados antigos, assume-se que foi "hoje".
                 ...run,
                 deliveredAt: (run as any).deliveredAt || new Date().toISOString(), 
             } as EarningsRun));
@@ -46,9 +36,6 @@ const getDeliveredRuns = (): EarningsRun[] => {
     }
 };
 
-/**
- * Filtra corridas concluídas com base no período selecionado.
- */
 const filterRunsByPeriod = (runs: EarningsRun[], period: Period): EarningsRun[] => {
     if (period === 'all') return runs;
 
@@ -58,7 +45,6 @@ const filterRunsByPeriod = (runs: EarningsRun[], period: Period): EarningsRun[] 
     if (period === 'today') {
         startDate.setHours(0, 0, 0, 0);
     } else if (period === 'week') {
-        // Pega o último domingo
         startDate.setDate(now.getDate() - now.getDay()); 
         startDate.setHours(0, 0, 0, 0);
     } else if (period === 'month') {
@@ -71,23 +57,10 @@ const filterRunsByPeriod = (runs: EarningsRun[], period: Period): EarningsRun[] 
     });
 };
 
-// --- COMPONENTE PLACEHOLDER (Gráfico) ---
-
-const EarningsChartPlaceholder: React.FC = () => (
-    <div className="flex flex-col items-center justify-center h-48 bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4">
-        <TrendingUp className="w-8 h-8 text-primary mb-2" />
-        <p className="text-sm text-muted-foreground">Gráfico de desempenho (Placeholder)</p>
-    </div>
-);
-
-
-// --- COMPONENTE PRINCIPAL ---
-
 export default function EarningsPage() {
     const [period, setPeriod] = useState<Period>('week');
     const [allDeliveredRuns, setAllDeliveredRuns] = useState<EarningsRun[]>([]);
 
-    // Recarrega as corridas sempre que o LocalStorage muda
     useEffect(() => {
         const updateRuns = () => setAllDeliveredRuns(getDeliveredRuns());
         
@@ -96,7 +69,6 @@ export default function EarningsPage() {
         return () => window.removeEventListener('storage', updateRuns);
     }, []);
 
-    // Cálculos otimizados (useMemo)
     const { totalEarnings, totalDeliveries, averageEarning, bestEarning, recentDeliveries } = useMemo(() => {
         
         const filteredRuns = filterRunsByPeriod(allDeliveredRuns, period);
@@ -111,7 +83,6 @@ export default function EarningsPage() {
             : 0;
 
         const recentDeliveries = filteredRuns
-            // Ordena pelo mais recente (deliveredAt)
             .sort((a, b) => new Date(b.deliveredAt).getTime() - new Date(a.deliveredAt).getTime())
             .slice(0, 5);
 
@@ -130,7 +101,6 @@ export default function EarningsPage() {
 
     return (
         <div className="flex flex-col gap-8 p-6 container">
-            {/* Título e Filtro de Período */}
             <div className="flex justify-between items-start flex-wrap gap-4">
                 <div>
                     <h1 className="text-3xl font-headline font-bold text-primary flex items-center gap-2">
@@ -152,7 +122,6 @@ export default function EarningsPage() {
                 </Select>
             </div>
 
-            {/* Cards de Estatísticas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="border-2 border-primary/50 shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -199,56 +168,44 @@ export default function EarningsPage() {
                 </Card>
             </div>
 
-            {/* Gráfico e Tabela de Histórico */}
-            <div className="grid gap-8 lg:grid-cols-5">
-                <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle className="font-headline">Desempenho no Período</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pl-2">
-                        {/* Substituindo EarningsChart pelo nosso Placeholder */}
-                        <EarningsChartPlaceholder />
-                    </CardContent>
-                </Card>
-                
-                <Card className="lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="font-headline">Corridas Recentes</CardTitle>
-                        <p className="text-sm text-muted-foreground">Últimas 5 entregas do período.</p>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Local</TableHead>
-                                    <TableHead className="text-right">Valor</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {recentDeliveries.length > 0 ? (
-                                    recentDeliveries.map((d: EarningsRun) => (
-                                        <TableRow key={d.id}>
-                                            <TableCell>
-                                                <div className="font-medium">{d.pickupLocation}</div>
-                                                <div className="text-sm text-muted-foreground">{new Date(d.deliveredAt).toLocaleDateString('pt-BR')}</div>
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium text-green-600">
-                                                {formatCurrency(d.value)}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={2} className="text-center text-muted-foreground">
-                                            Nenhuma corrida concluída neste período.
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle className="font-headline">Corridas Recentes</CardTitle>
+                    <p className="text-sm text-muted-foreground">Últimas 5 entregas do período.</p>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Local</TableHead>
+                                <TableHead className="text-right">Valor</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {recentDeliveries.length > 0 ? (
+                                recentDeliveries.map((d: EarningsRun) => (
+                                    <TableRow key={d.id}>
+                                        <TableCell>
+                                            <div className="font-medium">{d.pickupLocation}</div>
+                                            <div className="text-sm text-muted-foreground">{new Date(d.deliveredAt).toLocaleDateString('pt-BR')}</div>
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium text-green-600">
+                                            {formatCurrency(d.value)}
                                         </TableCell>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </div>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-center text-muted-foreground">
+                                        Nenhuma corrida concluída neste período.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
             {totalDeliveries === 0 && (
                 <Alert className="border-l-4 border-l-red-500 mt-4">
                     <MapPin className="h-4 w-4 text-red-500" />

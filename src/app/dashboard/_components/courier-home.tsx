@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bike } from "lucide-react";
 import { CourierRun } from '@/lib/types';
+import SalesChart from '@/components/dashboard/sales-chart';
 
 const RUNS_STORAGE_KEY = 'courier_runs_motoca';
 const ONLINE_STATUS_STORAGE_KEY = 'courier_online_status';
@@ -20,22 +21,36 @@ export default function CourierHome({ name = "João da Silva" }: { name?: string
     });
 
     const [completedRuns, setCompletedRuns] = useState(0);
+    const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
-        const updateCompletedRuns = () => {
+        const updateRunsData = () => {
             const storedRuns = localStorage.getItem(RUNS_STORAGE_KEY);
             if (storedRuns) {
                 const runs: CourierRun[] = JSON.parse(storedRuns);
-                const deliveredRuns = runs.filter(run => run.status === 'delivered').length;
-                setCompletedRuns(deliveredRuns);
+                const deliveredRuns = runs.filter(run => run.status === 'delivered');
+                setCompletedRuns(deliveredRuns.length);
+
+                const dailyData = deliveredRuns.reduce((acc, run) => {
+                    const date = new Date(run.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    if (!acc[date]) {
+                        acc[date] = { date, completedOrders: 0, totalSales: 0 };
+                    }
+                    acc[date].completedOrders++;
+                    acc[date].totalSales += run.fee;
+                    return acc;
+                }, {} as Record<string, { date: string; completedOrders: number; totalSales: number }>);
+
+                const chartDataArray = Object.values(dailyData).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                setChartData(chartDataArray);
             }
         };
 
-        updateCompletedRuns();
+        updateRunsData();
 
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === RUNS_STORAGE_KEY) {
-                updateCompletedRuns();
+                updateRunsData();
             }
         };
 
@@ -84,11 +99,9 @@ export default function CourierHome({ name = "João da Silva" }: { name?: string
                     {isOnline ? 'Online' : 'Offline'}
                 </Button>
             </div>
-
-            <div className="py-4"></div>
-
-            <div className="flex justify-center w-full">
-                <Card className="w-full max-w-xs md:max-w-md border-0 shadow-lg">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card className="w-full border-0 shadow-lg">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg font-semibold text-muted-foreground text-center">
                             Corridas do Dia
@@ -103,6 +116,16 @@ export default function CourierHome({ name = "João da Silva" }: { name?: string
                             {String(completedRuns).padStart(2, '0')}
                         </p>
 
+                    </CardContent>
+                </Card>
+                <Card className="w-full border-0 shadow-lg">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-semibold text-muted-foreground text-center">
+                            Desempenho no Período
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <SalesChart data={chartData} />
                     </CardContent>
                 </Card>
             </div>
