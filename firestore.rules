@@ -18,12 +18,6 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isExistingOwner(deliveryCourierId);
     }
 
-    match /profiles/{userId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow write: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-    }
-
     match /deliveryOrders/{deliveryOrderId} {
       allow get: if true;
       allow list: if true;
