@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Clock, Users, Utensils, TrendingUp, AlertTriangle } from "lucide-react";
 import type { MerchantOrder } from "@/lib/types"; 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import SalesChart from '@/components/dashboard/sales-chart';
 
-// Chave para buscar os pedidos (a mesma das páginas Orders e Finances)
 const ORDERS_STORAGE_KEY = 'merchant_orders_motoca'; 
 
 interface DashboardMetrics {
@@ -13,63 +13,55 @@ interface DashboardMetrics {
     deliveredOrders: number;
     pendingOrders: number;
     averageTicket: number;
+    chartData: any[];
 }
 
-/**
- * Calcula as métricas chave do dashboard a partir dos pedidos no LocalStorage.
- */
 const calculateDashboardMetrics = (): DashboardMetrics => {
     if (typeof window === 'undefined') {
-        return { totalEarnings: 0, deliveredOrders: 0, pendingOrders: 0, averageTicket: 0 };
+        return { totalEarnings: 0, deliveredOrders: 0, pendingOrders: 0, averageTicket: 0, chartData: [] };
     }
 
     const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
     if (!storedOrders) {
-        return { totalEarnings: 0, deliveredOrders: 0, pendingOrders: 0, averageTicket: 0 };
+        return { totalEarnings: 0, deliveredOrders: 0, pendingOrders: 0, averageTicket: 0, chartData: [] };
     }
 
     try {
         const orders: MerchantOrder[] = JSON.parse(storedOrders);
         
-        // 1. Pedidos Concluídos e Ganhos
         const delivered = orders.filter(order => order.status === 'delivered');
         const totalEarnings = delivered.reduce((sum, order) => sum + order.total, 0);
-
-        // 2. Pedidos em Andamento
         const pending = orders.filter(order => order.status !== 'delivered');
-        
-        // 3. Ticket Médio
         const averageTicket = delivered.length > 0 ? totalEarnings / delivered.length : 0;
+
+        const dailyData = delivered.reduce((acc, order) => {
+            const date = new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            if (!acc[date]) {
+                acc[date] = { date, completedOrders: 0, totalSales: 0 };
+            }
+            acc[date].completedOrders++;
+            acc[date].totalSales += order.total;
+            return acc;
+        }, {} as Record<string, { date: string; completedOrders: number; totalSales: number }>);
+
+        const chartData = Object.values(dailyData).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         return { 
             totalEarnings, 
             deliveredOrders: delivered.length, 
             pendingOrders: pending.length,
             averageTicket,
+            chartData,
         };
     } catch (error) {
         console.error("Erro ao processar pedidos do localStorage:", error);
-        return { totalEarnings: 0, deliveredOrders: 0, pendingOrders: 0, averageTicket: 0 };
+        return { totalEarnings: 0, deliveredOrders: 0, pendingOrders: 0, averageTicket: 0, chartData: [] };
     }
 };
-
-// Componente Placeholder para o Gráfico de Vendas
-const SalesChartPlaceholder: React.FC = () => {
-    return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[300px] bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4">
-            <TrendingUp className="w-10 h-10 text-primary mb-3" />
-            <p className="text-lg font-semibold text-primary">Gráfico de Vendas (Placeholder)</p>
-            <p className="text-sm text-muted-foreground">Implementação de biblioteca de gráficos pendente (Ex: Recharts).</p>
-        </div>
-    );
-};
-
-// --- COMPONENTE PRINCIPAL ---
 
 export default function MerchantHome({ name = "Restaurante" }: { name?: string }) {
     const [metrics, setMetrics] = useState<DashboardMetrics>(() => calculateDashboardMetrics());
     
-    // Recarrega os dados do dashboard quando o LocalStorage é alterado
     useEffect(() => {
         const handleStorageChange = () => {
             setMetrics(calculateDashboardMetrics());
@@ -77,7 +69,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
 
         handleStorageChange(); 
         
-        // Listener para sincronização
         window.addEventListener('storage', handleStorageChange);
         
         return () => {
@@ -85,7 +76,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
         };
     }, []);
 
-    // Formatação de Moeda
     const formatCurrency = (value: number) => 
         value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         
@@ -94,7 +84,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
     return (
         <div className="flex flex-col gap-8 p-4 container">
             
-            {/* 1. Cabeçalho e Saudação */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
                     <h1 className="text-3xl font-headline font-bold text-gray-800">
@@ -102,7 +91,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
                     </h1>
                     <p className="text-lg text-muted-foreground mt-1">{greeting} Seu resumo de performance de hoje.</p>
                 </div>
-                {/* Status Operacional */}
                 <Alert className="w-full md:w-auto mt-4 md:mt-0 border-green-500 bg-green-50">
                     <Utensils className="h-4 w-4 text-green-600" />
                     <AlertTitle className="text-green-700">Restaurante Aberto</AlertTitle>
@@ -114,10 +102,8 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
 
             <hr className="my-2" />
 
-            {/* 2. Cartões de Métricas Chave */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 
-                {/* Cartão 1: Total de Ganhos */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -133,7 +119,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
                     </CardContent>
                 </Card>
 
-                {/* Cartão 2: Pedidos em Andamento */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -149,7 +134,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
                     </CardContent>
                 </Card>
                 
-                {/* Cartão 3: Ticket Médio */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -165,7 +149,6 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
                     </CardContent>
                 </Card>
 
-                {/* Cartão 4: Pedidos Concluídos */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -182,17 +165,15 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
                 </Card>
             </div>
 
-            {/* 3. Gráfico de Tendências */}
             <Card className="col-span-1 lg:col-span-4 mt-4">
                 <CardHeader>
                     <CardTitle>Performance de Vendas nos Últimos 7 Dias</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <SalesChartPlaceholder />
+                    <SalesChart data={metrics.chartData} />
                 </CardContent>
             </Card>
 
-            {/* 4. Alerta de Dica */}
             <Alert className="border-l-4 border-l-orange-500 mt-4">
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
                 <AlertTitle>Dica de Simulação</AlertTitle>
