@@ -8,6 +8,7 @@ import SalesChart from '@/components/dashboard/sales-chart';
 import { Switch } from "@/components/ui/switch";
 
 const ORDERS_STORAGE_KEY = 'merchant_orders_motoca'; 
+const RESTAURANT_STATUS_KEY = 'restaurant_status_motoca';
 
 interface DashboardMetrics {
     totalEarnings: number;
@@ -62,21 +63,26 @@ const calculateDashboardMetrics = (): DashboardMetrics => {
 
 export default function MerchantHome({ name = "Restaurante" }: { name?: string }) {
     const [metrics, setMetrics] = useState<DashboardMetrics>(() => calculateDashboardMetrics());
-    const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
+    const [isRestaurantOpen, setIsRestaurantOpen] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        const savedStatus = localStorage.getItem(RESTAURANT_STATUS_KEY);
+        return savedStatus ? JSON.parse(savedStatus) : true;
+    });
     
     useEffect(() => {
         const handleStorageChange = () => {
             setMetrics(calculateDashboardMetrics());
         };
-
         handleStorageChange(); 
-        
         window.addEventListener('storage', handleStorageChange);
-        
         return () => {
             window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem(RESTAURANT_STATUS_KEY, JSON.stringify(isRestaurantOpen));
+    }, [isRestaurantOpen]);
 
     const formatCurrency = (value: number) => 
         value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

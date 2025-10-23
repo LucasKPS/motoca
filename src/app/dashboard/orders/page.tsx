@@ -10,14 +10,15 @@ import { MoreHorizontal, ShoppingCart, Bike, CheckCircle, Clock, Utensils, User,
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { useToast } from "@/hooks/use-toast";
 
 // Chaves de Storage
 const MENU_STORAGE_KEY = 'menu_items_motoca'; 
 const ORDERS_STORAGE_KEY = 'merchant_orders_motoca'; 
+const RESTAURANT_STATUS_KEY = 'restaurant_status_motoca';
 
 
-// --- FUNÇÕES DE LÓGICA E DADOS (Mantidas) ---
+// --- FUNÇÕES DE LÓGICA E DADOS ---
 
 const getMenuFromLocalStorage = () => {
     if (typeof window !== 'undefined') {
@@ -43,6 +44,14 @@ const saveOrdersToLocalStorage = (orders: MerchantOrder[]) => {
     if (typeof window !== 'undefined') {
         localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     }
+};
+
+const getRestaurantStatus = (): boolean => {
+    if (typeof window !== 'undefined') {
+        const status = localStorage.getItem(RESTAURANT_STATUS_KEY);
+        return status ? JSON.parse(status) : true;
+    }
+    return true;
 };
 
 const generateSimulatedOrder = (menuItems: MenuItem[]): MerchantOrder => {
@@ -75,6 +84,7 @@ const generateSimulatedOrder = (menuItems: MenuItem[]): MerchantOrder => {
         items: numItems, 
         total: total,
         status: 'preparing', 
+        createdAt: new Date().toISOString(),
         courier: courier,
         itemDetails: itemDetails, 
     };
@@ -133,7 +143,6 @@ const OrderRow = ({ order }: { order: MerchantOrder }) => {
     )
 }
 
-// CORREÇÃO AQUI: Definindo o componente NovoPedidoModal com tipos explícitos
 interface NovoPedidoModalProps {
     order: MerchantOrder;
     onClose: () => void;
@@ -148,35 +157,23 @@ const NovoPedidoModal: React.FC<NovoPedidoModalProps> = ({ order, onClose, onAcc
             onClose(); 
             return;
         }
-
-        const timer = setInterval(() => {
-            setTimeLeft((prevTime) => prevTime - 1);
-        }, 1000);
-
+        const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
         return () => clearInterval(timer);
     }, [timeLeft, onClose]);
 
-
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000]">
-            <div 
-                className="bg-white rounded-xl shadow-2xl w-full max-w-sm border border-red-500 overflow-hidden"
-                style={{ borderColor: '#FF5050', maxWidth: '380px' }}
-            >
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm border border-red-500 overflow-hidden" style={{ borderColor: '#FF5050', maxWidth: '380px' }}>
                 <div className="flex justify-between items-center p-5 border-b border-gray-100">
                     <div className="flex items-center">
-                        <span className="text-3xl mr-3" style={{ color: '#FF5050' }}>🔔</span>
+                        <span className="text-3xl mr-3">🔔</span>
                         <h3 className="m-0 text-xl font-bold" style={{ color: '#FF5050' }}>Novo Pedido!</h3>
                     </div>
-                    <span className="text-2xl font-bold text-gray-800">
-                        R$ {order.total.toFixed(2).replace('.', ',')}
-                    </span>
+                    <span className="text-2xl font-bold text-gray-800">{order.total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
                 </div>
-
                 <p className="text-sm text-gray-600 text-left px-5 mt-3">
                     Você tem <span className="font-semibold text-red-500">{timeLeft}</span> segundos para aceitar.
                 </p>
-
                 <div className="p-5 space-y-3">
                     <div className="bg-gray-50 rounded-lg p-4 flex items-center border border-gray-200">
                         <span className="mr-3 text-xl">🍔</span>
@@ -185,7 +182,6 @@ const NovoPedidoModal: React.FC<NovoPedidoModalProps> = ({ order, onClose, onAcc
                             <p className="m-0 font-bold text-base">{order.items} {order.items > 1 ? 'itens' : 'item'}</p>
                         </div>
                     </div>
-
                     <div className="bg-gray-50 rounded-lg p-4 flex items-center border border-gray-200">
                         <span className="mr-3 text-xl">👤</span>
                         <div>
@@ -194,22 +190,9 @@ const NovoPedidoModal: React.FC<NovoPedidoModalProps> = ({ order, onClose, onAcc
                         </div>
                     </div>
                 </div>
-
                 <div className="flex justify-between gap-3 p-5 pt-0">
-                    <Button 
-                        onClick={onClose} 
-                        variant="destructive"
-                        className="flex-1 h-12 text-base font-bold bg-red-600 hover:bg-red-700 rounded-lg"
-                    >
-                        <span className="mr-2">✕</span> Recusar
-                    </Button>
-                    <Button 
-                        onClick={onAccept} 
-                        className="flex-1 h-12 text-base font-bold bg-green-600 hover:bg-green-700 rounded-lg"
-                        style={{ backgroundColor: '#28a745' }}
-                    >
-                        <span className="mr-2">✓</span> Aceitar
-                    </Button>
+                    <Button onClick={onClose} variant="destructive" className="flex-1 h-12 text-base font-bold bg-red-600 hover:bg-red-700 rounded-lg"><span>✕</span> Recusar</Button>
+                    <Button onClick={onAccept} className="flex-1 h-12 text-base font-bold bg-green-600 hover:bg-green-700 rounded-lg"><span>✓</span> Aceitar</Button>
                 </div>
             </div>
         </div>
@@ -217,28 +200,30 @@ const NovoPedidoModal: React.FC<NovoPedidoModalProps> = ({ order, onClose, onAcc
 };
 
 
-// --- COMPONENTE PRINCIPAL (EXPORT DEFAULT) ---
+// --- COMPONENTE PRINCIPAL ---
 
-export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOrder[] }) {
-    // 1. Estado para gerenciar todos os pedidos (INICIALIZA DO LOCALSTORAGE)
-    const [liveOrders, setLiveOrders] = useState<MerchantOrder[]>(getOrdersFromLocalStorage()); 
-
-    // 2. Estado para controlar o modal e o pedido que está sendo oferecido
+export default function MerchantOrdersPage() {
+    const { toast } = useToast();
+    const [liveOrders, setLiveOrders] = useState<MerchantOrder[]>(getOrdersFromLocalStorage());
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [currentSimulatedOrder, setCurrentSimulatedOrder] = useState<MerchantOrder | null>(null);
-
-    // 3. Estado para carregar os itens do cardápio
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
+
     useEffect(() => {
         setMenuItems(getMenuFromLocalStorage());
-    }, []); 
+        setIsRestaurantOpen(getRestaurantStatus());
+        
+        const handleStorageUpdate = () => {
+            setIsRestaurantOpen(getRestaurantStatus());
+        };
+        window.addEventListener('storage', handleStorageUpdate);
+        return () => window.removeEventListener('storage', handleStorageUpdate);
+    }, []);
     
-    // NOVO EFEITO: Salva pedidos no LocalStorage sempre que liveOrders mudar
     useEffect(() => {
         saveOrdersToLocalStorage(liveOrders);
     }, [liveOrders]);
-
-    // --- LÓGICAS DE FLUXO ---
 
     const handleCloseModal = useCallback(() => {
         setShowOrderModal(false);
@@ -246,40 +231,32 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
     }, []);
 
     const addSimulatedOrder = useCallback((newOrder: MerchantOrder) => {
-        setLiveOrders(prevOrders => [...prevOrders, newOrder]);
+        setLiveOrders(prev => [...prev, newOrder]);
         handleCloseModal();
-
-        // 2. Simula o tempo de preparo (3s) -> READY
         setTimeout(() => {
-            setLiveOrders(prevOrders => prevOrders.map(order => 
-                order.id === newOrder.id ? { ...order, status: 'ready' } : order
-            ));
-            
-            // 3. Simula a chegada do motoboy (2s) -> OUT_FOR_DELIVERY
+            setLiveOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: 'ready' } : o));
             setTimeout(() => {
-                setLiveOrders(prevOrders => prevOrders.map(order => 
-                    order.id === newOrder.id ? { ...order, status: 'out_for_delivery' } : order
-                ));
-
-                // 4. Simula a entrega (5s) -> DELIVERED (CONCLUÍDO)
+                setLiveOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: 'out_for_delivery' } : o));
                 setTimeout(() => {
-                    setLiveOrders(prevOrders => prevOrders.map(order => 
-                        order.id === newOrder.id ? { ...order, status: 'delivered' } : order
-                    ));
-                }, 5000); 
-            }, 2000); 
-        }, 3000); 
+                    setLiveOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: 'delivered' } : o));
+                }, 5000);
+            }, 2000);
+        }, 3000);
     }, [handleCloseModal]);
 
-
     const handleSimulateOrder = () => {
+        if (!isRestaurantOpen) {
+            toast({
+                title: "Restaurante Fechado",
+                description: "Você não pode simular novos pedidos enquanto o restaurante estiver fechado.",
+                variant: "destructive",
+            });
+            return;
+        }
         const newOrder = generateSimulatedOrder(menuItems);
         setCurrentSimulatedOrder(newOrder);
         setShowOrderModal(true);
     };
-
-
-    // --- RENDERING PRINCIPAL ---
     
     const tabs: { value: MerchantOrder['status'] | 'all', label: string }[] = [
         { value: 'all', label: 'Todos' },
@@ -298,17 +275,15 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
         <div className="flex flex-col gap-8 p-4 container">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-headline font-bold text-primary flex items-center gap-2">
-                        <ShoppingCart />
-                        Pedidos
-                    </h1>
+                    <h1 className="text-3xl font-headline font-bold text-primary flex items-center gap-2"><ShoppingCart /> Pedidos</h1>
                     <p className="text-muted-foreground mt-1">Gerencie e acompanhe todos os pedidos do seu restaurante.</p>
                 </div>
                 <Button 
                     onClick={handleSimulateOrder}
                     className="h-10 px-4 py-2 font-bold"
-                    style={{ backgroundColor: '#FF5050', color: 'white' }}
-                    disabled={menuItems.length === 0} 
+                    style={{ backgroundColor: isRestaurantOpen ? '#FF5050' : '#a0a0a0', color: 'white' }}
+                    disabled={!isRestaurantOpen || menuItems.length === 0} 
+                    title={!isRestaurantOpen ? "Abra o restaurante para receber novos pedidos." : ""}
                 >
                     Simular Novo Pedido 🛒
                 </Button>
@@ -320,7 +295,7 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
                         <div className="p-2">
                             <TabsList className="h-auto flex-wrap justify-start">
                                 {tabs.map(tab => (
-                                    <TabsTrigger key={tab.value} value={tab.value}>
+                                    <TabsTrigger key={tab.value} value={tab.value} disabled={liveOrders.length === 0}>
                                         {tab.label} ({getFilteredOrders(tab.value).length})
                                     </TabsTrigger>
                                 ))}
@@ -345,7 +320,7 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {filteredOrders.sort((a, b) => b.id.localeCompare(a.id)).map(order => (
+                                                {filteredOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(order => (
                                                     <OrderRow key={order.id} order={order} />
                                                 ))}
                                             </TableBody>
@@ -368,7 +343,6 @@ export default function MerchantOrdersPage({ orders = [] }: { orders: MerchantOr
                 </CardContent>
             </Card>
             
-            {/* Modal de Novo Pedido (Simulação) */}
             {showOrderModal && currentSimulatedOrder && (
                 <NovoPedidoModal 
                     order={currentSimulatedOrder}
