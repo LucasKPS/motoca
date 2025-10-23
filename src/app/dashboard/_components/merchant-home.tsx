@@ -37,16 +37,23 @@ const calculateDashboardMetrics = (): DashboardMetrics => {
         const averageTicket = delivered.length > 0 ? totalEarnings / delivered.length : 0;
 
         const dailyData = delivered.reduce((acc, order) => {
-            const date = new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            if (!acc[date]) {
-                acc[date] = { date, completedOrders: 0, totalSales: 0 };
+            // VERIFICAÇÃO: Apenas processa para o gráfico se a data de criação existir
+            if (order.createdAt) { 
+                const date = new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                if (!acc[date]) {
+                    acc[date] = { date, completedOrders: 0, totalSales: 0 };
+                }
+                acc[date].completedOrders++;
+                acc[date].totalSales += order.total;
             }
-            acc[date].completedOrders++;
-            acc[date].totalSales += order.total;
             return acc;
         }, {} as Record<string, { date: string; completedOrders: number; totalSales: number }>);
 
-        const chartData = Object.values(dailyData).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const chartData = Object.values(dailyData).sort((a, b) => {
+            const [dayA, monthA] = a.date.split('/').map(Number);
+            const [dayB, monthB] = b.date.split('/').map(Number);
+            return new Date(2000, monthA - 1, dayA).getTime() - new Date(2000, monthB - 1, dayB).getTime();
+        });
 
         return { 
             totalEarnings, 
@@ -75,13 +82,19 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
         };
         handleStorageChange(); 
         window.addEventListener('storage', handleStorageChange);
+        
+        // Adiciona um listener para o evento de limpar storage
+        window.addEventListener('clear-storage', handleStorageChange);
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('clear-storage', handleStorageChange);
         };
     }, []);
 
     useEffect(() => {
         localStorage.setItem(RESTAURANT_STATUS_KEY, JSON.stringify(isRestaurantOpen));
+        window.dispatchEvent(new Event('storage')); // Garante que outras abas reajam à mudança de status
     }, [isRestaurantOpen]);
 
     const formatCurrency = (value: number) => 

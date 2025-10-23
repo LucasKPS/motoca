@@ -30,8 +30,8 @@ const MapPlaceholder = () => {
         setLocationStatus('error');
         toast({
           variant: 'destructive',
-          title: 'Acesso à Localização Negado',
-          description: 'Por favor, habilite o acesso à localização nas configurações do seu navegador.',
+          title: 'Falha ao Obter Localização',
+          description: 'Não foi possível acessar sua localização. Verifique as permissões do navegador e garanta que está em uma conexão segura (HTTPS).',
         });
       },
       {
@@ -65,9 +65,10 @@ const MapPlaceholder = () => {
             </div>
           )}
            {locationStatus === 'error' && (
-            <div className="flex flex-col items-center gap-2 text-destructive">
+            <div className="flex flex-col items-center gap-2 text-destructive text-center">
               <AlertTriangle className="h-8 w-8" />
-              <span>Falha ao obter localização.</span>
+              <span>Falha ao obter sua localização.</span>
+              <p className="text-xs max-w-xs">Verifique as permissões do navegador e certifique-se de estar em uma conexão segura (HTTPS).</p>
               <Button variant="outline" size="sm" onClick={requestLocation} className="mt-2">
                 Tentar Novamente
               </Button>

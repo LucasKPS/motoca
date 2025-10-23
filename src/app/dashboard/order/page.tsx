@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Minus, X, Utensils, CheckCircle, Package, ArrowLeft, MapPin } from 'lucide-react';
+import { Plus, Minus, X, Utensils, CheckCircle, Package, ArrowLeft, MapPin, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Order } from '@/lib/types';
@@ -47,7 +47,8 @@ export default function OrderPage() {
     const restaurantName = searchParams.get('name') || RESTAURANT_DETAILS.name;
 
     const [cart, setCart] = useState<CartItem[]>([]);
-    const [deliveryAddress, setDeliveryAddress] = useState(''); // Estado para o endereço
+    const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<'credit' | 'debit' | 'cash' | null>(null);
     const [isSendingOrder, setIsSendingOrder] = useState(false);
     const [orderSent, setOrderSent] = useState(false);
     const [error, setError] = useState('');
@@ -95,9 +96,13 @@ export default function OrderPage() {
             return;
         }
 
-        // Validação do endereço
         if (!deliveryAddress.trim()) {
             setError('Por favor, informe o endereço de entrega.');
+            return;
+        }
+
+        if (!paymentMethod) {
+            setError('Por favor, selecione a forma de pagamento.');
             return;
         }
 
@@ -120,7 +125,8 @@ export default function OrderPage() {
             date: new Date().toLocaleDateString('pt-BR'),
             rating: 0,
             createdAt: Date.now(),
-            deliveryAddress: deliveryAddress, // Salva o endereço no pedido
+            deliveryAddress: deliveryAddress,
+            paymentMethod: paymentMethod,
         };
 
         try {
@@ -134,7 +140,8 @@ export default function OrderPage() {
             window.dispatchEvent(new Event('storage'));
 
             setCart([]);
-            setDeliveryAddress(''); // Limpa o endereço após o envio
+            setDeliveryAddress('');
+            setPaymentMethod(null);
             setOrderSent(true);
 
         } catch (e) {
@@ -281,9 +288,9 @@ export default function OrderPage() {
                             </div>
                         )}
                         
-                        {/* Endereço de Entrega e Resumo da Compra */}
+                        {/* Endereço, Pagamento e Resumo da Compra */}
                         {cart.length > 0 && (
-                            <div className="pt-4 space-y-4 border-t mt-4">
+                            <div className="pt-4 space-y-5 border-t mt-4">
                                 {/* Endereço de Entrega */}
                                 <div className="space-y-2">
                                      <label htmlFor="address" className="text-base font-semibold text-gray-800 flex items-center gap-2">
@@ -299,8 +306,30 @@ export default function OrderPage() {
                                     />
                                 </div>
 
+                                {/* Forma de Pagamento */}
+                                <div className="space-y-2">
+                                    <label className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                                        <CreditCard className="w-5 h-5 text-primary" />
+                                        Forma de Pagamento
+                                    </label>
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 bg-gray-50/50">
+                                        <label className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-gray-100">
+                                            <input type="radio" name="paymentMethod" value="credit" checked={paymentMethod === 'credit'} onChange={() => setPaymentMethod('credit')} className="h-4 w-4 text-primary focus:ring-primary border-gray-300"/>
+                                            <span>Cartão de Crédito</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-gray-100">
+                                            <input type="radio" name="paymentMethod" value="debit" checked={paymentMethod === 'debit'} onChange={() => setPaymentMethod('debit')} className="h-4 w-4 text-primary focus:ring-primary border-gray-300"/>
+                                            <span>Cartão de Débito</span>
+                                        </label>
+                                        <label className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-gray-100">
+                                            <input type="radio" name="paymentMethod" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} className="h-4 w-4 text-primary focus:ring-primary border-gray-300"/>
+                                            <span>Dinheiro</span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 {/* Resumo Financeiro */}
-.                                <div className="space-y-2 pt-2">
+                                <div className="space-y-2 pt-2">
                                     <div className="flex justify-between text-gray-600">
                                         <span>Subtotal:</span>
                                         <span>{subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>

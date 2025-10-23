@@ -20,6 +20,7 @@ export type Order = {
     rating: number;
     createdAt: number; 
     deliveryAddress: string;
+    paymentMethod: 'credit' | 'debit' | 'cash';
 }
 
 export type MerchantOrder = {
