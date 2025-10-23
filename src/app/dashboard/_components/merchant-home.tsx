@@ -1,10 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Clock, Users, Utensils, TrendingUp, AlertTriangle } from "lucide-react";
+import { DollarSign, Clock, Users, Utensils, TrendingUp, AlertTriangle, DoorClosed } from "lucide-react";
 import type { MerchantOrder } from "@/lib/types"; 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import SalesChart from '@/components/dashboard/sales-chart';
+import { Switch } from "@/components/ui/switch";
 
 const ORDERS_STORAGE_KEY = 'merchant_orders_motoca'; 
 
@@ -61,6 +62,7 @@ const calculateDashboardMetrics = (): DashboardMetrics => {
 
 export default function MerchantHome({ name = "Restaurante" }: { name?: string }) {
     const [metrics, setMetrics] = useState<DashboardMetrics>(() => calculateDashboardMetrics());
+    const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
     
     useEffect(() => {
         const handleStorageChange = () => {
@@ -91,13 +93,22 @@ export default function MerchantHome({ name = "Restaurante" }: { name?: string }
                     </h1>
                     <p className="text-lg text-muted-foreground mt-1">{greeting} Seu resumo de performance de hoje.</p>
                 </div>
-                <Alert className="w-full md:w-auto mt-4 md:mt-0 border-green-500 bg-green-50">
-                    <Utensils className="h-4 w-4 text-green-600" />
-                    <AlertTitle className="text-green-700">Restaurante Aberto</AlertTitle>
-                    <AlertDescription className="text-sm text-green-600">
-                        Pronto para receber novos pedidos.
-                    </AlertDescription>
+                
+                <Alert className={`w-full md:w-auto mt-4 md:mt-0 flex items-center justify-between ${isRestaurantOpen ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+                    <div className="flex items-center">
+                        {isRestaurantOpen ? <Utensils className="h-4 w-4 text-green-600 mr-2" /> : <DoorClosed className="h-4 w-4 text-red-600 mr-2" />}
+                        <div>
+                            <AlertTitle className={isRestaurantOpen ? 'text-green-700' : 'text-red-700'}>
+                                {isRestaurantOpen ? 'Restaurante Aberto' : 'Restaurante Fechado'}
+                            </AlertTitle>
+                            <AlertDescription className={isRestaurantOpen ? 'text-sm text-green-600' : 'text-sm text-red-600'}>
+                                {isRestaurantOpen ? 'Pronto para receber novos pedidos.' : 'Você não está recebendo pedidos.'}
+                            </AlertDescription>
+                        </div>
+                    </div>
+                    <Switch checked={isRestaurantOpen} onCheckedChange={setIsRestaurantOpen} className="ml-4" />
                 </Alert>
+
             </div>
 
             <hr className="my-2" />

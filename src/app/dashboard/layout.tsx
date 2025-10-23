@@ -133,7 +133,7 @@ export default function DashboardLayout({
      if (user) {
         let defaultName = 'Usuário';
         if (userRole === 'courier') defaultName = 'João da Silva';
-        else if (userRole === 'client') defaultName = 'Ana Cliente';
+        else if (userRole === 'client') defaultName = 'Joao da silva';
         else if (userRole === 'merchant') defaultName = 'Pizzaria Delícia';
         setName(user.displayName ?? defaultName);
         setAvatarUrl(user.photoURL ?? `https://i.pravatar.cc/150?u=${user.uid}`);

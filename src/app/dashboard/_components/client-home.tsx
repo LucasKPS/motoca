@@ -7,13 +7,14 @@ import CategoryCard from "@/components/dashboard/category-card";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import MapPlaceholder from "@/components/dashboard/map-placeholder";
 
 const restaurants = [
     { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
     { id: 'burger-queen', name: 'Burger Queen', rating: 4.8, category: 'Lanches', deliveryTime: '20-30 min', logo: 'burgerking' },
 ]
 
-export default function ClientHome({ name }: { name?: string }) {
+export default function ClientHome({ name = "Joao da silva" }: { name?: string }) {
   const [search, setSearch] = useState('')
 
   function handleSearch() {
@@ -76,6 +77,16 @@ export default function ClientHome({ name }: { name?: string }) {
             />
         </div>
       </Card>
+
+      {/* Sua Localização */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold font-headline">Sua Localização</h3>
+        </div>
+        <div className="w-full">
+            <MapPlaceholder />
+        </div>
+      </div>
 
       {/* Restaurants */}
       <div>

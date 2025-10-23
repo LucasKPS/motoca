@@ -10,9 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useAuth, useUser } from "@/firebase";
 import { getProfile, updateProfile } from '@/firebase/auth';
-import { Bike, DollarSign, Edit, Star, Truck, Loader2 } from "lucide-react";
+import { Bike, Edit, Star, Truck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { Delivery } from "@/lib/types";
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
@@ -30,9 +29,6 @@ export default function ProfilePage() {
   const [notifyPromos, setNotifyPromos] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user?.photoURL ?? '');
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Mock data - replace with real data fetching
-  const deliveries: Delivery[] = []; 
 
   useEffect(() => {
     if (user) {
@@ -50,11 +46,6 @@ export default function ProfilePage() {
       fetchProfile();
     }
   }, [user]);
-
-
-  const deliveredDeliveries = deliveries.filter(d => d.status === 'delivered');
-  const totalDeliveries = deliveredDeliveries.length;
-  const totalEarnings = deliveredDeliveries.reduce((acc, d) => acc + d.earnings, 0);
 
   const handleEditPhotoClick = () => {
     fileInputRef.current?.click();
@@ -145,23 +136,7 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="font-headline text-lg">Estatísticas Gerais</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <Label className="flex items-center gap-2 text-muted-foreground">
-                            <DollarSign className="w-5 h-5 text-primary" />
-                            Ganhos Totais
-                        </Label>
-                        <span className="font-bold font-headline text-lg">
-                            {totalEarnings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <Label className="flex items-center gap-2 text-muted-foreground">
-                            <Truck className="w-5 h-5 text-primary" />
-                            Entregas Totais
-                        </Label>
-                        <span className="font-bold font-headline text-lg">{totalDeliveries}</span>
-                    </div>
+                <CardContent>
                      <div className="flex justify-between items-center">
                         <Label className="flex items-center gap-2 text-muted-foreground">
                             <Star className="w-5 h-5 text-primary" />

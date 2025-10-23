@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bike } from "lucide-react";
 import { CourierRun } from '@/lib/types';
 import SalesChart from '@/components/dashboard/sales-chart';
+import MapPlaceholder from "@/components/dashboard/map-placeholder";
 
 const RUNS_STORAGE_KEY = 'courier_runs_motoca';
 const ONLINE_STATUS_STORAGE_KEY = 'courier_online_status';
@@ -99,6 +100,12 @@ export default function CourierHome({ name = "João da Silva" }: { name?: string
                     {isOnline ? 'Online' : 'Offline'}
                 </Button>
             </div>
+            
+            {isOnline && (
+                <div className="w-full">
+                    <MapPlaceholder />
+                </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Card className="w-full border-0 shadow-lg">

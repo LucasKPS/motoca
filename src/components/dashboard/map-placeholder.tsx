@@ -45,7 +45,7 @@ const MapPlaceholder = () => {
   }, []);
 
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader>
         <CardTitle className="font-headline flex items-center justify-between">
           <div className="flex items-center gap-2">
