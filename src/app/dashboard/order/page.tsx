@@ -23,15 +23,29 @@ interface CartItem extends MenuItem {
 }
 
 // Dados de Simulação
-const RESTAURANT_DETAILS = {
-    name: 'Pizzaria Delícia',
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop',
-    menu: [
-        { id: 1, name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão.', price: 45.00 },
-        { id: 2, name: 'Pizza Pepperoni', description: 'Mussarela, pepperoni e orégano.', price: 55.50 },
-        { id: 3, name: 'Refrigerante 2L', description: 'Coca-Cola ou Guaraná.', price: 10.00 },
-        { id: 4, name: 'Água Mineral', description: 'Com ou sem gás.', price: 4.50 },
-    ]
+const ALL_RESTAURANTS_DATA = {
+    'pizzaria-delicia': {
+        id: 'pizzaria-delicia',
+        name: 'Pizzaria Delícia',
+        image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop',
+        menu: [
+            { id: 1, name: 'Pizza Margherita', description: 'Molho de tomate, mussarela e manjericão.', price: 45.00 },
+            { id: 2, name: 'Pizza Pepperoni', description: 'Mussarela, pepperoni e orégano.', price: 55.50 },
+            { id: 3, name: 'Refrigerante 2L', description: 'Coca-Cola ou Guaraná.', price: 10.00 },
+            { id: 4, name: 'Água Mineral', description: 'Com ou sem gás.', price: 4.50 },
+        ]
+    },
+    'burger-queen': {
+        id: 'burger-queen',
+        name: 'Burger Queen',
+        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop',
+        menu: [
+            { id: 5, name: 'Cheeseburger', description: 'Pão, carne, queijo, picles e cebola.', price: 25.00 },
+            { id: 6, name: 'Double Bacon', description: 'Pão, duas carnes, dobro de bacon e queijo.', price: 35.50 },
+            { id: 7, name: 'Batata Frita', description: 'Porção grande.', price: 15.00 },
+            { id: 8, name: 'Milkshake', description: 'Sabor chocolate.', price: 18.00 },
+        ]
+    }
 };
 
 // CHAVE FIXA PARA SIMULAÇÃO NO LOCAL STORAGE
@@ -44,7 +58,8 @@ export default function OrderPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     
-    const restaurantName = searchParams.get('name') || RESTAURANT_DETAILS.name;
+    const restaurantId = searchParams.get('id') || 'pizzaria-delicia';
+    const restaurant = ALL_RESTAURANTS_DATA[restaurantId as keyof typeof ALL_RESTAURANTS_DATA] || ALL_RESTAURANTS_DATA['pizzaria-delicia'];
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -113,7 +128,7 @@ export default function OrderPage() {
 
         const newOrder: Order = {
             id: orderId,
-            restaurant: restaurantName,
+            restaurant: restaurant.name,
             total: parseFloat(total.toFixed(2)),
             status: 'pending',
             items: cart.map(item => ({
@@ -161,7 +176,7 @@ export default function OrderPage() {
                     <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
                     <CardTitle className="text-3xl font-extrabold text-green-700">Pedido Enviado com Sucesso!</CardTitle>
                     <CardDescription className="mt-4 text-gray-600">
-                        Seu pedido em **{restaurantName}** foi salvo localmente. 
+                        Seu pedido em **{restaurant.name}** foi salvo localmente. 
                         Acompanhe o status na tela "Meus Pedidos".
                     </CardDescription>
                     <div className="mt-8 flex flex-col gap-3">
@@ -189,26 +204,26 @@ export default function OrderPage() {
                 
                 <h1 className="text-4xl font-extrabold text-gray-900 flex items-center gap-3">
                     <Utensils className="w-9 h-9 text-primary"/>
-                    Pedido em {restaurantName}
+                    Pedido em {restaurant.name}
                 </h1>
                 
                 <Card className='shadow-xl rounded-xl'>
                     <div className="relative h-48 w-full">
                         <Image 
-                            src={RESTAURANT_DETAILS.image}
-                            alt={restaurantName}
+                            src={restaurant.image}
+                            alt={restaurant.name}
                             fill
                             className="object-cover rounded-t-xl"
                         />
                     </div>
                     <CardHeader>
-                        <CardTitle className="text-2xl">{RESTAURANT_DETAILS.name}</CardTitle>
+                        <CardTitle className="text-2xl">{restaurant.name}</CardTitle>
                         <CardDescription>Monte seu pedido escolhendo os itens abaixo.</CardDescription>
                     </CardHeader>
                     <CardContent className='pt-0'>
                         <h2 className="text-xl font-bold mb-4 border-b pb-2">Menu</h2>
                         <div className="space-y-4">
-                            {RESTAURANT_DETAILS.menu.map(item => (
+                            {restaurant.menu.map(item => (
                                 <div key={item.id} className="flex justify-between items-center border-b pb-3">
                                     <div>
                                         <p className="font-semibold text-lg text-gray-800">{item.name}</p>
