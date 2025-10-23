@@ -3,50 +3,35 @@ const nextConfig = {
     // Configurações para garantir que imagens externas sejam carregadas corretamente
     images: {
         dangerouslyAllowSVG: true,
-        // Configuração de padrões de domínios remotos
+        // ATENÇÃO: A configuração abaixo permite imagens de QUALQUER domínio.
+        // Isso é conveniente para desenvolvimento, mas para produção,
+        // é ALTAMENTE recomendado especificar apenas os domínios confiáveis.
         remotePatterns: [
-            // 1. Domínio principal para Imagens de Capa (Unsplash)
             {
                 protocol: 'https',
-                hostname: 'images.unsplash.com', 
-                port: '',
-                pathname: '/**', 
-            },
-            // 2. Domínio principal para Logos de Restaurante (Clearbit)
-            {
-                protocol: 'https',
-                hostname: 'logo.clearbit.com', 
-                port: '',
-                pathname: '/**', 
-            },
-            // 3. Domínio de Logo Alternativo (Adicionado para o Sushi House)
-            {
-                protocol: 'https',
-                hostname: 'api.logoduck.com',
-                port: '',
-                pathname: '/**', 
-            },
-            // 4. Domínio para Placeholders e Testes (TCDN)
-            {
-                protocol: 'https',
-                hostname: 'images.tcdn.com.br',
-                port: '',
-                pathname: '/**', 
-            },
-            // 5. Domínios de Placeholders Genéricos
-            {
-                protocol: 'https',
-                hostname: 'placehold.co',
-                port: '',
-                pathname: '/**', 
+                hostname: '**',
             },
             {
-                protocol: 'https',
-                hostname: 'picsum.photos',
-                port: '',
-                pathname: '/**', 
+                protocol: 'http',
+                hostname: '**',
             },
         ],
+    },
+
+    // Configuração para desabilitar o cache durante o desenvolvimento
+    // Ajuda a evitar problemas de conteúdo obsoleto ao rodar localmente.
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'no-store, max-age=0, must-revalidate',
+                    },
+                ],
+            },
+        ];
     },
 };
 

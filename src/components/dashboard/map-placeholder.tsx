@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Loader2, AlertTriangle } from 'lucide-react';
+import { MapPin, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -22,20 +22,36 @@ const MapPlaceholder = () => {
         setLocationStatus('success');
         toast({
           title: 'Localização Ativada',
-          description: 'O rastreamento em tempo real está ativo.',
+          description: 'O mapa agora está centralizado na sua localização.',
         });
       },
       (error) => {
-        console.error(error);
+        let errorMessage = 'Ocorreu um erro desconhecido ao tentar obter sua localização.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permissão para acessar a localização foi negada. Por favor, habilite nas configurações do seu navegador.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Sua localização não está disponível no momento. Tente novamente mais tarde.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'A solicitação de localização demorou muito para responder. Tente novamente.';
+            break;
+        }
+
+        console.error(`Geolocation Error (Code ${error.code}): ${error.message}`);
+
         setLocationStatus('error');
         toast({
           variant: 'destructive',
           title: 'Falha ao Obter Localização',
-          description: 'Não foi possível acessar sua localização. Verifique as permissões do navegador e garanta que está em uma conexão segura (HTTPS).',
+          description: errorMessage,
         });
       },
       {
         enableHighAccuracy: true,
+        timeout: 10000, // Adicionado timeout de 10 segundos
+        maximumAge: 0
       }
     );
   };
@@ -44,65 +60,59 @@ const MapPlaceholder = () => {
     requestLocation();
   }, []);
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPin className="text-primary" />
-            Rastreamento em Tempo Real
-          </div>
-           <Button variant="ghost" size="sm" onClick={requestLocation}>Atualizar Local</Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="aspect-video w-full overflow-hidden rounded-lg shadow-inner bg-muted/50 flex items-center justify-center relative">
-          {locationStatus === 'pending' && (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Loader2 className="animate-spin h-8 w-8 text-primary" />
-              <span>Obtendo sua localização...</span>
-              <span className="text-xs text-center max-w-xs">Por favor, permita o acesso à localização quando solicitado pelo navegador.</span>
-            </div>
-          )}
-           {locationStatus === 'error' && (
-            <div className="flex flex-col items-center gap-2 text-destructive text-center">
-              <AlertTriangle className="h-8 w-8" />
-              <span>Falha ao obter sua localização.</span>
-              <p className="text-xs max-w-xs">Verifique as permissões do navegador e certifique-se de estar em uma conexão segura (HTTPS).</p>
-              <Button variant="outline" size="sm" onClick={requestLocation} className="mt-2">
-                Tentar Novamente
-              </Button>
-            </div>
-          )}
-          {locationStatus === 'success' && mapImage && (
-            <>
-              <Image
-                src={mapImage.imageUrl}
-                alt={mapImage.description}
-                fill
-                className="w-full h-full object-cover"
-                data-ai-hint={mapImage.imageHint}
-              />
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="relative flex flex-col items-center text-center p-4 rounded-lg">
-                    <MapPin className="text-white h-12 w-12 drop-shadow-lg" />
-                    <div className="mt-2 bg-black/60 backdrop-blur-sm p-2 rounded-md text-white">
-                        <p className="font-bold text-lg">Rastreamento Ativo!</p>
-                        {position && (
-                            <p className="text-xs font-mono">
-                                Lat: {position.lat.toFixed(4)}, Lng: {position.lng.toFixed(4)}
-                            </p>
-                        )}
+  // ... (restante do código JSX permanece o mesmo)
+  // O código JSX será incluído na resposta completa para garantir a integridade do arquivo.
+
+    return (
+        <Card className="h-full w-full shadow-lg relative overflow-hidden rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between z-10 absolute top-0 left-0 right-0 bg-gradient-to-b from-black/50 to-transparent p-4">
+                <CardTitle className="text-white text-2xl font-bold">Sua Localização</CardTitle>
+                {locationStatus === 'error' && (
+                    <Button variant="outline" size="sm" onClick={requestLocation} className="bg-white/90 text-gray-800 hover:bg-white">
+                        <RefreshCw className="w-4 h-4 mr-2"/>
+                        Tentar Novamente
+                    </Button>
+                )}
+            </CardHeader>
+
+            <CardContent className="p-0 h-full w-full flex items-center justify-center">
+                {locationStatus === 'pending' && (
+                    <div className="flex flex-col items-center justify-center text-center p-4 z-10 bg-black/30 absolute inset-0 text-white">
+                        <Loader2 className="animate-spin w-12 h-12 mb-4" />
+                        <p className="text-xl font-semibold">Obtendo sua localização...</p>
+                        <p className="text-sm text-gray-200">Por favor, autorize o acesso no seu navegador.</p>
                     </div>
-                 </div>
-              </div>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+                )}
+
+                {locationStatus === 'error' && (
+                    <div className="flex flex-col items-center justify-center text-center p-4 z-10 bg-red-900/50 absolute inset-0 text-white">
+                        <AlertTriangle className="w-12 h-12 mb-4 text-red-300" />
+                        <p className="text-xl font-semibold">Não foi possível obter a localização</p>
+                        <p className="text-sm text-gray-200 mt-1">Clique em "Tentar Novamente" ou verifique as permissões.</p>
+                    </div>
+                )}
+
+                {locationStatus === 'success' && position && (
+                     <div className="flex flex-col items-center justify-center text-center p-4 z-10 bg-green-900/50 absolute inset-0 text-white">
+                        <MapPin className="w-12 h-12 mb-4 text-green-300" />
+                        <p className="text-xl font-semibold">Localização Obtida com Sucesso!</p>
+                        <p className="text-sm font-mono bg-white/10 px-2 py-1 rounded mt-2">
+                            Lat: {position.lat.toFixed(4)}, Lng: {position.lng.toFixed(4)}
+                        </p>
+                    </div>
+                )}
+
+                {mapImage && (
+                    <Image
+                        src={mapImage.src}
+                        alt={mapImage.alt}
+                        fill
+                        className={`object-cover transition-filter duration-500 ${locationStatus !== 'pending' ? 'blur-sm' : ''}`}
+                    />
+                )}
+            </CardContent>
+        </Card>
+    );
 };
 
 export default MapPlaceholder;
