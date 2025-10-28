@@ -7,7 +7,13 @@ import CategoryCard from "@/components/dashboard/category-card";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import MapPlaceholder from "@/components/dashboard/map-placeholder";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const Map = dynamic(() => import('@/components/dashboard/map'), {
+  loading: () => <Skeleton className="w-full h-full" />,
+  ssr: false
+});
 
 const restaurants = [
     { id: 'pizzaria-delicia', name: 'Pizzaria Delícia', rating: 4.5, category: 'Pizza', deliveryTime: '25-35 min', logo: 'mcdonalds' },
@@ -83,8 +89,8 @@ export default function ClientHome({ name = "Joao da silva" }: { name?: string }
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold font-headline">Sua Localização</h3>
         </div>
-        <div className="w-full">
-            <MapPlaceholder />
+        <div className="w-full h-64 rounded-lg overflow-hidden">
+            <Map />
         </div>
       </div>
 

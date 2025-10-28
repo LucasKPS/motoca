@@ -104,8 +104,8 @@ const MapPlaceholder = () => {
 
                 {mapImage && (
                     <Image
-                        src={mapImage.src}
-                        alt={mapImage.alt}
+                        src={mapImage.imageUrl}
+                        alt={mapImage.description}
                         fill
                         className={`object-cover transition-filter duration-500 ${locationStatus !== 'pending' ? 'blur-sm' : ''}`}
                     />
