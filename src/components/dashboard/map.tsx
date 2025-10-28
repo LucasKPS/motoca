@@ -16,13 +16,15 @@ const Map = () => {
 
   useEffect(() => {
     if (containerRef.current && !mapRef.current) {
-
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: iconRetinaUrl.src,
-            iconUrl: iconUrl.src,
-            shadowUrl: shadowUrl.src,
-        });
+      L.Marker.prototype.options.icon = L.icon({
+        iconUrl: iconUrl.src,
+        iconRetinaUrl: iconRetinaUrl.src,
+        shadowUrl: shadowUrl.src,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
 
       const map = L.map(containerRef.current, {
         center: [-23.0333, -45.55],
